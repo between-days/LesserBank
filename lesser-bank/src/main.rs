@@ -19,7 +19,7 @@ async fn manual_hello() -> impl Responder {
 
 fn get_addr() -> (String, u16) {
     let default_host = "localhost";
-    let default_port = 8081;
+    let default_port = 8080;
 
     let host = match env::var("HOST") {
         Ok(v) => v,
