@@ -21,18 +21,22 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .route(
-                "/customers/{cid}/accounts/{aid}",
+                //Create customer account
+                "/customers/{cid}/account",
                 web::post().to(handlers::create_account),
             )
             .route(
+                //Get customer bank account list
                 "/customers/{cid}/accounts",
                 web::get().to(handlers::get_accounts),
             )
             .route(
-                "/customers/{cid}accounts/{aid}",
+                //Get customer bank account
+                "/customers/{cid}/accounts/{aid}",
                 web::get().to(handlers::get_account),
             )
             .route(
+                //Delete customer bank account
                 "/customers/{cid}/accounts/{aid}",
                 web::delete().to(handlers::delete_account),
             )

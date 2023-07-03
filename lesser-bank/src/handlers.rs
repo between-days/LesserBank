@@ -1,15 +1,18 @@
 use actix_web::{web, Result};
+use rand::Rng;
 
-pub async fn create_account(path: web::Path<(u32, u32)>) -> Result<String> {
-    let (customer_id, account_id) = path.into_inner();
+pub async fn create_account(path: web::Path<(u32)>) -> Result<String> {
+    let customer_id = path.into_inner();
+
+    let account_id = rand::thread_rng().gen_range(0..100);
 
     println!(
-        "Trying to create account {}, for customer {}",
+        "Trying to create account {} for customer {}",
         account_id, customer_id
     );
 
     Ok(format!(
-        "Trying to create account {}, for customer {}",
+        "Trying to create account {} for customer {}",
         account_id, customer_id,
     ))
 }
