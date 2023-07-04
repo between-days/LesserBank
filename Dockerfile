@@ -10,10 +10,9 @@ RUN cargo build --release
 FROM debian:12
 
 ENV HOST=0.0.0.0
-# Don't need this yet
-# ARG PORT=8080
-# ENV PORT=$PORT
-# EXPOSE $PORT
+
+# need libpq for postgres comms
+RUN apt update && apt install -y libpq5
 
 COPY --from=builder api/target/release/lesser-bank-api ./
 
