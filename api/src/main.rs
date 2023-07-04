@@ -1,7 +1,9 @@
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
+use diesel::r2d2::{self, ConnectionManager, Pool};
+use diesel::PgConnection;
+use dotenvy::dotenv;
 use std::env;
 
-mod accounts_service;
 mod handlers;
 
 fn get_addr() -> (String, u16) {
@@ -23,6 +25,21 @@ fn get_addr() -> (String, u16) {
     (host, port)
 }
 
+fn get_db_pool() -> Pool<ConnectionManager<PgConnection>> {
+    const DEFAULT_DATABASE_URL: &str = "postgres://postgres:postgres@localhost/postgres";
+    dotenv().ok();
+
+    let database_url = match env::var("DATABASE_URL") {
+        Ok(v) => v,
+        Err(_) => DEFAULT_DATABASE_URL.to_string(),
+    };
+
+    let manager = ConnectionManager::<PgConnection>::new(database_url);
+    r2d2::Pool::builder()
+        .build(manager)
+        .expect("Failed to create pool.")
+}
+
 #[get("/")]
 async fn hello() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
@@ -30,8 +47,11 @@ async fn hello() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+    let pool = get_db_pool();
+
+    HttpServer::new(move || {
         App::new()
+            .app_data(web::Data::new(pool.clone()))
             .route(
                 // Create customer account
                 "/customers/{cid}/account",

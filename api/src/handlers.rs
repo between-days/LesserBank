@@ -1,8 +1,11 @@
 use actix_web::{web, Responder, Result};
+use diesel::r2d2::ConnectionManager;
+use diesel::{r2d2::Pool, PgConnection};
 use rand::Rng;
 use serde::Serialize;
 
-use crate::accounts_service::{_create_account, _get_accounts};
+#[path = "./repository/accounts_repo.rs"]
+mod accounts_repo;
 
 #[derive(Serialize)]
 struct AccountRest {
@@ -16,7 +19,10 @@ struct AccountsRest {
     accounts: Vec<AccountRest>,
 }
 
-pub async fn create_account(path: web::Path<i32>) -> Result<impl Responder> {
+pub async fn create_account(
+    pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
+    path: web::Path<i32>,
+) -> Result<impl Responder> {
     let customer_id = path.into_inner();
     let account_id = rand::thread_rng().gen_range(0..100);
 
@@ -25,7 +31,12 @@ pub async fn create_account(path: web::Path<i32>) -> Result<impl Responder> {
         account_id, customer_id
     );
 
-    let acc = _create_account(customer_id);
+    let acc = web::block(move || {
+        let mut conn = pool.get().expect("couldn't get db connection from pool");
+        accounts_repo::create_account(&mut conn, customer_id)
+    })
+    .await?;
+    // .map_err(error::ErrorInternalServerError)?;
 
     Ok(web::Json(AccountRest {
         id: acc.id,
@@ -34,12 +45,20 @@ pub async fn create_account(path: web::Path<i32>) -> Result<impl Responder> {
     }))
 }
 
-pub async fn get_accounts(path: web::Path<u32>) -> Result<impl Responder> {
+pub async fn get_accounts(
+    pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
+    path: web::Path<i32>,
+) -> Result<impl Responder> {
     let customer_id = path.into_inner();
 
     println!("Trying to get accounts for customer {}", customer_id);
 
-    let accs = _get_accounts();
+    let accs = web::block(move || {
+        let mut conn = pool.get().expect("couldn't get db connection from pool");
+        accounts_repo::get_accounts(&mut conn, customer_id)
+    })
+    .await?;
+    // .map_err(error::ErrorInternalServerError)?;
 
     Ok(web::Json(AccountsRest {
         accounts: accs
