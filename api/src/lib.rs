@@ -6,17 +6,16 @@ use std::env;
 pub mod models;
 pub mod schema;
 
+const DEFAULT_DATABASE_URL: &str = "postgres://postgres:postgres@localhost/postgres";
+
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();
 
-    let test = match env::var("DATABASE_URL") {
+    let database_url = match env::var("DATABASE_URL") {
         Ok(v) => v,
-        Err(_) => ("not set").to_string(),
+        Err(_) => DEFAULT_DATABASE_URL.to_string(),
     };
 
-    println!("db: {}", test);
-
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     PgConnection::establish(&database_url)
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
