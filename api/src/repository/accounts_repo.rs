@@ -12,10 +12,11 @@ pub fn create_account(
     db_conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
     customer_id: i32,
 ) -> Account {
-    let zero = 0;
+    const ZERO: i32 = 0;
+
     let new_account = NewAccount {
         customer_id,
-        balance: zero,
+        balance: ZERO,
     };
 
     diesel::insert_into(accounts::table)
@@ -35,4 +36,30 @@ pub fn get_accounts(
         .select(Account::as_select())
         .load(db_conn)
         .expect("Error loading accounts")
+}
+
+pub fn get_account(
+    db_conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    customer_id: i32,
+    account_id: i32
+) -> Account {
+    accounts::table
+        .filter(accounts::customer_id.eq(customer_id))
+        .filter(accounts::id.eq(account_id))
+        .select(Account::as_select())
+        .get_result(db_conn)
+        .expect(&format!("Error getting account {} from customer {}", account_id, customer_id))
+}
+
+pub fn delete_account(
+    db_conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    customer_id: i32,
+    account_id: i32
+) {
+    diesel::delete(accounts::table
+        .filter(accounts::customer_id.eq(customer_id))
+        .filter(accounts::id.eq(account_id)))
+        .execute(db_conn)
+        .expect("Failed to delete account");
+
 }

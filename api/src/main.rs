@@ -55,7 +55,7 @@ async fn main() -> std::io::Result<()> {
             .route(
                 // Create customer account
                 "/customers/{cid}/account",
-                web::get().to(handlers::create_account),
+                web::post().to(handlers::create_account),
             )
             .route(
                 // Get customer bank account list
