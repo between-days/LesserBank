@@ -2,22 +2,12 @@ use actix_web::{web, HttpResponse};
 use diesel::r2d2::ConnectionManager;
 use diesel::{r2d2::Pool, PgConnection};
 use rand::Rng;
-use serde::Serialize;
+// use serde::Serialize;
 
-#[path = "./repository/accounts_repo.rs"]
+#[path = "./../../repository/accounts_repo.rs"]
 mod accounts_repo;
 
-#[derive(Serialize)]
-struct AccountRest {
-    id: i32,
-    customer_id: i32,
-    balance: i32,
-}
-
-#[derive(Serialize)]
-struct AccountsRest {
-    accounts: Vec<AccountRest>,
-}
+use crate::api::accounts::models::{AccountRest, AccountsRest};
 
 pub async fn create_account(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
@@ -38,18 +28,14 @@ pub async fn create_account(
     .await;
 
     match res {
-        Ok(account) => HttpResponse::Ok()
-            .json(
-                web::Json(AccountRest {
-                    id: account.id,
-                    customer_id: account.customer_id,
-                    balance: account.balance,
-                })
-            ),
+        Ok(account) => HttpResponse::Ok().json(web::Json(AccountRest {
+            id: account.id,
+            customer_id: account.customer_id,
+            balance: account.balance,
+        })),
 
         Err(_) => HttpResponse::InternalServerError()
-            .body("Cannot geet Accounts for customer due to internal server error")
-
+            .body("Cannot geet Accounts for customer due to internal server error"),
     }
 }
 
@@ -68,28 +54,25 @@ pub async fn get_accounts(
     .await;
 
     match res {
-        Ok(accounts) => HttpResponse::Ok()
-            .json(
-                web::Json(AccountsRest {
-                    accounts: accounts
-                        .iter()
-                        .map(|acc| AccountRest {
-                            id: acc.id,
-                            customer_id: acc.customer_id,
-                            balance: acc.balance,
-                        })
-                        .collect(),
+        Ok(accounts) => HttpResponse::Ok().json(web::Json(AccountsRest {
+            accounts: accounts
+                .iter()
+                .map(|acc| AccountRest {
+                    id: acc.id,
+                    customer_id: acc.customer_id,
+                    balance: acc.balance,
                 })
-            ),
+                .collect(),
+        })),
 
         Err(_) => HttpResponse::InternalServerError()
-            .body("Cannot geet Accounts for customer due to internal server error")
+            .body("Cannot geet Accounts for customer due to internal server error"),
     }
 }
 
 pub async fn get_account(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
-    path: web::Path<(i32, i32)>
+    path: web::Path<(i32, i32)>,
 ) -> HttpResponse {
     let (customer_id, account_id) = path.into_inner();
 
@@ -103,32 +86,27 @@ pub async fn get_account(
         accounts_repo::get_account(&mut conn, customer_id, account_id)
     })
     .await;
-    
+
     println!(
         "Trying to select account {}, for customer {}",
         account_id, customer_id
     );
 
     match res {
-        Ok(account) => 
-        HttpResponse::Ok()
-            .json(
-                web::Json(AccountRest {
-                    id: account.id,
-                    customer_id: account.customer_id,
-                    balance: account.balance,
-                })
-            ),
+        Ok(account) => HttpResponse::Ok().json(web::Json(AccountRest {
+            id: account.id,
+            customer_id: account.customer_id,
+            balance: account.balance,
+        })),
 
         Err(_) => HttpResponse::InternalServerError()
-            .body("Could not get account due to internal server error")
+            .body("Could not get account due to internal server error"),
     }
-
 }
 
 pub async fn delete_account(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
-    path: web::Path<(i32, i32)>
+    path: web::Path<(i32, i32)>,
 ) -> HttpResponse {
     let (customer_id, account_id) = path.into_inner();
 
@@ -144,10 +122,9 @@ pub async fn delete_account(
     .await;
 
     match res {
-        Ok(_) => HttpResponse::NoContent()
-            .body("Successfully deleted account"),
+        Ok(_) => HttpResponse::NoContent().body("Successfully deleted account"),
 
         Err(_) => HttpResponse::InternalServerError()
-            .body("Delete account failed due to internal server error")
+            .body("Delete account failed due to internal server error"),
     }
 }
