@@ -1,5 +1,4 @@
-use actix_web::error::BlockingError;
-use actix_web::{web, Responder, Result, HttpResponse, HttpResponseBuilder};
+use actix_web::{web, HttpResponse};
 use diesel::r2d2::ConnectionManager;
 use diesel::{r2d2::Pool, PgConnection};
 use rand::Rng;
@@ -143,8 +142,6 @@ pub async fn delete_account(
         accounts_repo::delete_account(&mut conn, customer_id, account_id)
     })
     .await;
-
-
 
     match res {
         Ok(_) => HttpResponse::NoContent()
