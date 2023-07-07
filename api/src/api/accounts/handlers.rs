@@ -3,7 +3,7 @@ use diesel::r2d2::ConnectionManager;
 use diesel::{r2d2::Pool, PgConnection};
 use rand::Rng;
 
-use crate::api::accounts::models::{AccountRest, AccountsRest};
+use super::models::{AccountRest, AccountsRest};
 use crate::repository::{accounts_repo, error::RepoError};
 
 pub async fn create_account(

@@ -1,9 +1,11 @@
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 
 mod api;
-mod routes;
-mod util;
+mod models;
 mod repository;
+mod routes;
+mod schema;
+mod util;
 
 #[get("/")]
 async fn hello() -> impl Responder {

@@ -3,9 +3,9 @@ use diesel::{
     r2d2::{ConnectionManager, PooledConnection},
 };
 
-use lesser_bank_api::{
+use crate::{
     models::{Account, NewAccount},
-    schema::{self, accounts},
+    schema::{self, accounts}
 };
 
 use super::error::RepoError;
