@@ -1,4 +1,4 @@
-use actix_web::{error, web, HttpResponse, Responder};
+use actix_web::{error, web, HttpResponse};
 use diesel::r2d2::ConnectionManager;
 use diesel::{r2d2::Pool, PgConnection};
 use rand::Rng;
@@ -83,9 +83,7 @@ pub async fn get_account(
         accounts_repo::get_account(&mut conn, customer_id, account_id)
     })
     .await
-    .map_err(|err| {
-        error::ErrorInternalServerError(err)
-    })?
+    .map_err(|err| error::ErrorInternalServerError(err))?
     .map_err(|err| match err {
         RepoError::NotFound => error::ErrorNotFound(err),
         RepoError::Other => error::ErrorInternalServerError(err),
