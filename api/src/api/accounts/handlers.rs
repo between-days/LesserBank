@@ -70,7 +70,7 @@ pub async fn get_accounts(
 pub async fn get_account(
     pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
     path: web::Path<(i32, i32)>,
-) -> actix_web::Result<impl Responder> {
+) -> Result<actix_web::web::Json<AccountRest>, actix_web::Error> {
     let (customer_id, account_id) = path.into_inner();
 
     println!(
@@ -82,7 +82,10 @@ pub async fn get_account(
         let mut conn = pool.get().expect("couldn't get db connection from pool");
         accounts_repo::get_account(&mut conn, customer_id, account_id)
     })
-    .await?
+    .await
+    .map_err(|err| {
+        error::ErrorInternalServerError(err)
+    })?
     .map_err(|err| match err {
         RepoError::NotFound => error::ErrorNotFound(err),
         RepoError::Other => error::ErrorInternalServerError(err),
