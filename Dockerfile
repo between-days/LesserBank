@@ -2,7 +2,7 @@ FROM rust:1.70 as builder
 
 COPY ./ ./
 
-WORKDIR api
+WORKDIR /api
 
 RUN cargo build --release
 

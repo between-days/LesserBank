@@ -1,17 +1,12 @@
 version: 0.0.1
 services:
-  api:
-    depends_on:
-      - db
-    build: .
-    ports:
-      - "8080:8080"
-    environment:
-      RUST_BACKTRACE: 1
-      DATABASE_URL: postgres://postgres:postgres@db/postgres
   db:
     image: "postgres:15"
-    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -19,6 +14,29 @@ services:
       - "5432:5432"
     volumes:
       - db:/var/lib/postgresql/data
+
+  init-db:
+    depends_on:
+      db:
+        condition: service_healthy
+    image: lesser-bank/db-migrations
+    build:
+      context: .
+      dockerfile: init.Dockerfile
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db/postgres
+
+  api:
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      RUST_BACKTRACE: 1
+      DATABASE_URL: postgres://postgres:postgres@db/postgres
+
 volumes:
   db:
     driver: local
