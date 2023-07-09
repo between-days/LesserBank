@@ -1,8 +1,10 @@
 FROM rust:1.70 as builder
 
-COPY ./ ./
-
 WORKDIR /api
+
+COPY /api/Cargo.toml /api/Cargo.toml
+COPY /api/Cargo.lock /api/Cargo.lock
+COPY /api/src /api/src
 
 RUN cargo build --release
 

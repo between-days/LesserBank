@@ -22,7 +22,7 @@ services:
     image: lesser-bank/db-migrations
     build:
       context: .
-      dockerfile: init.Dockerfile
+      dockerfile: init.migrations.Dockerfile
     environment:
       DATABASE_URL: postgres://postgres:postgres@db/postgres
 
