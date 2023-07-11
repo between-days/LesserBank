@@ -30,6 +30,7 @@ services:
     depends_on:
       init-db:
         condition: service_completed_successfully
+    image: lesser-bank/lesser-bank-api
     build: .
     ports:
       - "8080:8080"

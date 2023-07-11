@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrations
+spec:
+  template:
+    spec:
+      containers:
+      - name: db-migrations
+        image: lesser-bank/db-migrations
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: DATABASE_URL
+            value: postgres://postgres:postgres@database/postgres
+      restartPolicy: OnFailure
+  backoffLimit: 4

@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-srv
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: lesser-bank.com
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/test"
+            backend:
+              service:
+                name: lesser-bank-api
+                port:
+                  number: 8080
+
+
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: dev-api-ingress
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#   - host: localhost
+#     http:
+#       paths:
+#       - path: /test
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: lesser-bank-api
+#             port:
+#               number: 8080

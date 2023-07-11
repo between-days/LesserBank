@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lesser-bank-api
+  labels:
+    app: lesser-bank-api
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080 
+  selector:
+    app: lesser-bank-api
+  type: LoadBalancer

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+  labels:
+    app: lesser-bank
+    tier: database
+spec:
+  # comment or delete the following line if you want to use a LoadBalancer
+  # type: NodePort
+  # if your cluster supports it, uncomment the following to automatically create
+  # an external load-balanced IP for the frontend service.
+  # type: LoadBalancer
+  ports:
+  - port: 5432
+  selector:
+    app:  postgres-deploy
+    tier: database
