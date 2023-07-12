@@ -109,3 +109,43 @@ pub async fn delete_account<T: AccountsRepository>(
             .body("Delete account failed due to internal server error"),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        api::accounts::{handlers::create_account, models::AccountRest},
+        models::Account,
+        traits::MockAccountsRepository,
+    };
+
+    use actix_web::{body::to_bytes, web::Data};
+
+    #[actix_web::test]
+    async fn test_create_account_success() {
+        let customer_id = 1;
+
+        let expected_account = AccountRest {
+            id: 1,
+            customer_id: 1,
+            balance: 3,
+        };
+
+        let mut mock_repo = MockAccountsRepository::new();
+        mock_repo
+            .expect_create_account()
+            .times(1)
+            .returning(move |_| Account {
+                id: 1,
+                customer_id,
+                balance: 3,
+            });
+
+        let res = create_account(Data::new(mock_repo), customer_id.into()).await;
+
+        let body_serialized = to_bytes(res.into_body()).await.unwrap();
+
+        let expected_serialized = serde_json::to_string(&expected_account).unwrap();
+
+        assert_eq!(expected_serialized, body_serialized)
+    }
+}
