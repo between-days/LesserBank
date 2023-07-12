@@ -11,5 +11,4 @@ rand = "0.8.5"
 diesel = { version = "2.1.0", features = ["postgres", "numeric", "r2d2"] }
 dotenvy = "0.15"
 serde = { version = "1.0", features = ["derive"] }
-# r2d2 = "0.8.10"
-# r2d2_postgres = "0.18.1"
+env_logger = "0.10.0"

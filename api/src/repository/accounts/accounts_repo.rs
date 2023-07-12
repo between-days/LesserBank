@@ -1,6 +1,6 @@
 use diesel::{
     prelude::*,
-    r2d2::{ConnectionManager, PooledConnection},
+    r2d2::{ConnectionManager, Pool},
 };
 
 use crate::{
@@ -12,14 +12,18 @@ use crate::{
 use super::super::error::RepoError;
 
 #[derive(Clone)]
-pub struct AccountsRepoImpl {}
+pub struct AccountsRepoImpl {
+    pub pool: Pool<ConnectionManager<PgConnection>>,
+}
+
+impl AccountsRepoImpl {
+    pub fn new(pool: Pool<ConnectionManager<PgConnection>>) -> AccountsRepoImpl {
+        AccountsRepoImpl { pool }
+    }
+}
 
 impl AccountsRepository for AccountsRepoImpl {
-    fn create_account(
-        &self,
-        db_conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
-        customer_id: i32,
-    ) -> Account {
+    fn create_account(&self, customer_id: i32) -> Account {
         const ZERO: i32 = 0;
 
         let new_account = NewAccount {
@@ -27,37 +31,43 @@ impl AccountsRepository for AccountsRepoImpl {
             balance: ZERO,
         };
 
+        let mut conn = self
+            .pool
+            .get()
+            .expect("couldn't get db connection from pool");
+
         diesel::insert_into(accounts::table)
             .values(&new_account)
             .returning(Account::as_returning())
-            .get_result(db_conn)
+            .get_result(&mut conn)
             .expect("Error saving new account")
     }
 
-    fn get_accounts(
-        &self,
-        db_conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
-        customer_id: i32,
-    ) -> Vec<Account> {
+    fn get_accounts(&self, customer_id: i32) -> Vec<Account> {
+        let mut conn = self
+            .pool
+            .get()
+            .expect("couldn't get db connection from pool");
+
         accounts::table
             .filter(schema::accounts::customer_id.eq(customer_id))
             .limit(50)
             .select(Account::as_select())
-            .load(db_conn)
+            .load(&mut conn)
             .expect("Error loading accounts")
     }
 
-    fn get_account(
-        &self,
-        db_conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
-        customer_id: i32,
-        account_id: i32,
-    ) -> Result<Account, RepoError> {
+    fn get_account(&self, customer_id: i32, account_id: i32) -> Result<Account, RepoError> {
+        let mut conn = self
+            .pool
+            .get()
+            .expect("couldn't get db connection from pool");
+
         let res = accounts::table
             .filter(accounts::customer_id.eq(customer_id))
             .filter(accounts::id.eq(account_id))
             .select(Account::as_select())
-            .get_result(db_conn);
+            .get_result(&mut conn);
         match res {
             Ok(account) => Ok(account),
             Err(diesel::result::Error::NotFound) => Err(RepoError::NotFound),
@@ -65,18 +75,18 @@ impl AccountsRepository for AccountsRepoImpl {
         }
     }
 
-    fn delete_account(
-        &self,
-        db_conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
-        customer_id: i32,
-        account_id: i32,
-    ) {
+    fn delete_account(&self, customer_id: i32, account_id: i32) {
+        let mut conn = self
+            .pool
+            .get()
+            .expect("couldn't get db connection from pool");
+
         diesel::delete(
             accounts::table
                 .filter(accounts::customer_id.eq(customer_id))
                 .filter(accounts::id.eq(account_id)),
         )
-        .execute(db_conn)
+        .execute(&mut conn)
         .expect("Failed to delete account");
     }
 }

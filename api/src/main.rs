@@ -1,8 +1,4 @@
-use actix_web::{
-    get,
-    web::{self},
-    App, HttpResponse, HttpServer, Responder,
-};
+use actix_web::{get, web::Data, App, HttpResponse, HttpServer, Responder};
 use api::accounts::routes::configure_accounts_api;
 use repository::accounts::accounts_repo::AccountsRepoImpl;
 
@@ -20,13 +16,17 @@ async fn hello() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    std::env::set_var("RUST_LOG", "debug");
+    env_logger::init();
+
     let pool = util::get_db_pool();
-    let accounts_repo = AccountsRepoImpl {};
+
+    let accounts_repo = AccountsRepoImpl::new(pool);
+    let accounts_repo_data = Data::new(accounts_repo);
 
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(pool.clone()))
-            .app_data(web::Data::new(accounts_repo.clone()))
+            .app_data(accounts_repo_data.clone())
             .configure(configure_accounts_api)
             .service(hello)
     })

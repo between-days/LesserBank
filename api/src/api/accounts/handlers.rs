@@ -1,6 +1,4 @@
 use actix_web::{error, web, HttpResponse};
-use diesel::r2d2::ConnectionManager;
-use diesel::{r2d2::Pool, PgConnection};
 use rand::Rng;
 
 use super::models::{AccountRest, AccountsRest};
@@ -9,7 +7,6 @@ use crate::repository::error::RepoError;
 use crate::traits::AccountsRepository;
 
 pub async fn create_account(
-    pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
     accounts_repo: web::Data<AccountsRepoImpl>,
     path: web::Path<i32>,
 ) -> HttpResponse {
@@ -21,11 +18,7 @@ pub async fn create_account(
         account_id, customer_id
     );
 
-    let res = web::block(move || {
-        let mut conn = pool.get().expect("couldn't get db connection from pool");
-        accounts_repo.create_account(&mut conn, customer_id)
-    })
-    .await;
+    let res = web::block(move || accounts_repo.create_account(customer_id)).await;
 
     match res {
         Ok(account) => HttpResponse::Ok().json(web::Json(AccountRest {
@@ -40,7 +33,6 @@ pub async fn create_account(
 }
 
 pub async fn get_accounts(
-    pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
     accounts_repo: web::Data<AccountsRepoImpl>,
     path: web::Path<i32>,
 ) -> HttpResponse {
@@ -48,11 +40,7 @@ pub async fn get_accounts(
 
     println!("Trying to get accounts for customer {}", customer_id);
 
-    let res = web::block(move || {
-        let mut conn = pool.get().expect("couldn't get db connection from pool");
-        accounts_repo.get_accounts(&mut conn, customer_id)
-    })
-    .await;
+    let res = web::block(move || accounts_repo.get_accounts(customer_id)).await;
 
     match res {
         Ok(accounts) => HttpResponse::Ok().json(web::Json(AccountsRest {
@@ -72,7 +60,6 @@ pub async fn get_accounts(
 }
 
 pub async fn get_account(
-    pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
     accounts_repo: web::Data<AccountsRepoImpl>,
     path: web::Path<(i32, i32)>,
 ) -> Result<actix_web::web::Json<AccountRest>, actix_web::Error> {
@@ -83,16 +70,13 @@ pub async fn get_account(
         account_id, customer_id
     );
 
-    let account = web::block(move || {
-        let mut conn = pool.get().expect("couldn't get db connection from pool");
-        accounts_repo.get_account(&mut conn, customer_id, account_id)
-    })
-    .await
-    .map_err(|err| error::ErrorInternalServerError(err))?
-    .map_err(|err| match err {
-        RepoError::NotFound => error::ErrorNotFound(err),
-        RepoError::Other => error::ErrorInternalServerError(err),
-    })?;
+    let account = web::block(move || accounts_repo.get_account(customer_id, account_id))
+        .await
+        .map_err(|err| error::ErrorInternalServerError(err))?
+        .map_err(|err| match err {
+            RepoError::NotFound => error::ErrorNotFound(err),
+            RepoError::Other => error::ErrorInternalServerError(err),
+        })?;
 
     Ok(web::Json(AccountRest {
         id: account.id,
@@ -102,7 +86,6 @@ pub async fn get_account(
 }
 
 pub async fn delete_account(
-    pool: web::Data<Pool<ConnectionManager<PgConnection>>>,
     accounts_repo: web::Data<AccountsRepoImpl>,
     path: web::Path<(i32, i32)>,
 ) -> HttpResponse {
@@ -113,11 +96,7 @@ pub async fn delete_account(
         account_id, customer_id
     );
 
-    let res = web::block(move || {
-        let mut conn = pool.get().expect("couldn't get db connection from pool");
-        accounts_repo.delete_account(&mut conn, customer_id, account_id)
-    })
-    .await;
+    let res = web::block(move || accounts_repo.delete_account(customer_id, account_id)).await;
 
     match res {
         Ok(_) => HttpResponse::NoContent().body("Successfully deleted account"),
