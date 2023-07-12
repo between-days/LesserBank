@@ -1,5 +1,5 @@
-use actix_web::web::{Data, Path};
-use actix_web::{error, web, HttpResponse};
+use actix_web::web::{Data, Json, Path};
+use actix_web::{error, web, Error, HttpResponse};
 use rand::Rng;
 
 use super::models::{AccountRest, AccountsRest};
@@ -7,8 +7,8 @@ use crate::repository::error::RepoError;
 use crate::traits::AccountsRepository;
 
 pub async fn create_account<T: AccountsRepository>(
-    accounts_repo: web::Data<T>,
-    path: web::Path<i32>,
+    accounts_repo: Data<T>,
+    path: Path<i32>,
 ) -> HttpResponse {
     let customer_id = path.into_inner();
     let account_id = rand::thread_rng().gen_range(0..100);
@@ -42,8 +42,8 @@ pub async fn create_account<T: AccountsRepository>(
 }
 
 pub async fn get_accounts<T: AccountsRepository>(
-    accounts_repo: web::Data<T>,
-    path: web::Path<i32>,
+    accounts_repo: Data<T>,
+    path: Path<i32>,
 ) -> HttpResponse {
     let customer_id = path.into_inner();
 
@@ -85,7 +85,7 @@ pub async fn get_accounts<T: AccountsRepository>(
 pub async fn get_account<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<(i32, i32)>,
-) -> Result<actix_web::web::Json<AccountRest>, actix_web::Error> {
+) -> Result<Json<AccountRest>, Error> {
     let (customer_id, account_id) = path.into_inner();
 
     println!(
@@ -125,7 +125,7 @@ pub async fn get_account<T: AccountsRepository>(
 
 pub async fn delete_account<T: AccountsRepository>(
     accounts_repo: Data<T>,
-    path: web::Path<(i32, i32)>,
+    path: Path<(i32, i32)>,
 ) -> HttpResponse {
     let (customer_id, account_id) = path.into_inner();
 
