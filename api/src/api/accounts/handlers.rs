@@ -6,9 +6,7 @@ use super::models::{AccountRest, AccountsRest};
 use crate::repository::error::RepoError;
 use crate::traits::AccountsRepository;
 
-pub async fn create_account<
-    T: AccountsRepository + std::marker::Sync + std::marker::Send + 'static,
->(
+pub async fn create_account<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<i32>,
 ) -> HttpResponse {
