@@ -22,12 +22,12 @@ async fn main() -> std::io::Result<()> {
     let pool = util::get_db_pool();
 
     let accounts_repo = AccountsRepoImpl::new(pool);
-    let accounts_repo_data = Data::new(accounts_repo);
+    let accounts_repo_data = Data::new(accounts_repo.clone());
 
     HttpServer::new(move || {
         App::new()
             .app_data(accounts_repo_data.clone())
-            .configure(configure_accounts_api)
+            .configure(configure_accounts_api::<AccountsRepoImpl>)
             .service(hello)
     })
     .bind(util::get_addr())?

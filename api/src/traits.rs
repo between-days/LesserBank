@@ -1,6 +1,7 @@
 use crate::{models::Account, repository::error::RepoError};
 
 pub trait AccountsRepository {
+    // <T: Copy = Self>: Copy {
     fn create_account(&self, customer_id: i32) -> Account;
 
     fn get_accounts(&self, customer_id: i32) -> Vec<Account>;
