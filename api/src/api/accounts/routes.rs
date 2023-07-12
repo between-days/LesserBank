@@ -2,7 +2,7 @@ use actix_web::web;
 
 use crate::{api::accounts, traits::AccountsRepository};
 
-pub fn configure_accounts_api<T: AccountsRepository + 'static>(cfg: &mut web::ServiceConfig) {
+pub fn configure_accounts_api<T: AccountsRepository>(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/customers/{customer_id}/accounts")
             .service(
