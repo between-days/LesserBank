@@ -24,11 +24,9 @@ impl AccountsRepoImpl {
 
 impl AccountsRepository for AccountsRepoImpl {
     fn create_account(&self, customer_id: i32) -> Account {
-        const ZERO: i32 = 0;
-
         let new_account = NewAccount {
             customer_id,
-            balance: ZERO,
+            balance: 0,
         };
 
         let mut conn = self
