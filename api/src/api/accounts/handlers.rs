@@ -119,20 +119,23 @@ mod tests {
     };
 
     use actix_web::{body::to_bytes, web::Data};
+    use mockall::predicate::eq;
 
     #[actix_web::test]
     async fn test_create_account_success() {
         let customer_id = 1;
 
-        let expected_account = AccountRest {
+        let expected = serde_json::to_string(&AccountRest {
             id: 1,
             customer_id: 1,
             balance: 3,
-        };
+        })
+        .unwrap();
 
         let mut mock_repo = MockAccountsRepository::new();
         mock_repo
             .expect_create_account()
+            .with(eq(customer_id))
             .times(1)
             .returning(move |_| Account {
                 id: 1,
@@ -141,11 +144,8 @@ mod tests {
             });
 
         let res = create_account(Data::new(mock_repo), customer_id.into()).await;
+        let actual = to_bytes(res.into_body()).await.unwrap();
 
-        let body_serialized = to_bytes(res.into_body()).await.unwrap();
-
-        let expected_serialized = serde_json::to_string(&expected_account).unwrap();
-
-        assert_eq!(expected_serialized, body_serialized)
+        assert_eq!(expected, actual)
     }
 }
