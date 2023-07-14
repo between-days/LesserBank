@@ -3,6 +3,7 @@ use core::fmt;
 #[derive(Debug)]
 pub enum RepoError {
     NotFound,
+    ConnectionError,
     Other,
 }
 impl fmt::Display for RepoError {

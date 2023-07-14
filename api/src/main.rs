@@ -3,6 +3,7 @@ use api::accounts::routes::configure_accounts_api;
 use repository::accounts::accounts_repo::AccountsRepoImpl;
 
 mod api;
+mod error;
 mod models;
 mod repository;
 mod schema;

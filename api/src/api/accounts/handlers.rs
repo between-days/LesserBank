@@ -1,15 +1,16 @@
-use actix_web::web::{Data, Json, Path};
+use actix_web::http::header::ContentType;
+use actix_web::web::{Data, Path};
 use actix_web::{error, web, Error, HttpResponse};
 use rand::Rng;
 
 use super::models::{AccountRest, AccountsRest};
-use crate::repository::error::RepoError;
+use crate::error::RepoError;
 use crate::traits::AccountsRepository;
 
 pub async fn create_account<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<i32>,
-) -> HttpResponse {
+) -> Result<HttpResponse, Error> {
     let customer_id = path.into_inner();
     let account_id = rand::thread_rng().gen_range(0..100);
 
@@ -18,36 +19,36 @@ pub async fn create_account<T: AccountsRepository>(
         account_id, customer_id
     );
 
-    let res = web::block(move || {
-        let account = accounts_repo.create_account(customer_id);
-        account
-    })
-    .await;
+    let account = web::block(move || accounts_repo.create_account(customer_id))
+        .await
+        .map_err(|err| error::ErrorInternalServerError(err))?
+        .map_err(|err| error::ErrorInternalServerError(err))?;
 
-    match res {
-        Ok(account) => HttpResponse::Ok().json(web::Json(AccountRest {
+    Ok(HttpResponse::Created()
+        .insert_header(ContentType::json())
+        .json(web::Json(AccountRest {
             id: account.id,
             customer_id: account.customer_id,
             balance: account.balance,
-        })),
-
-        Err(_) => HttpResponse::InternalServerError()
-            .body("Cannot geet Accounts for customer due to internal server error"),
-    }
+        })))
 }
 
 pub async fn get_accounts<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<i32>,
-) -> HttpResponse {
+) -> Result<HttpResponse, Error> {
     let customer_id = path.into_inner();
 
     println!("Trying to get accounts for customer {}", customer_id);
 
-    let res = web::block(move || accounts_repo.get_accounts(customer_id)).await;
+    let accounts = web::block(move || accounts_repo.get_accounts(customer_id))
+        .await
+        .map_err(|err| error::ErrorInternalServerError(err))?
+        .map_err(|err| error::ErrorInternalServerError(err))?;
 
-    match res {
-        Ok(accounts) => HttpResponse::Ok().json(web::Json(AccountsRest {
+    Ok(HttpResponse::Ok()
+        .insert_header(ContentType::json())
+        .json(web::Json(AccountsRest {
             accounts: accounts
                 .iter()
                 .map(|acc| AccountRest {
@@ -56,17 +57,13 @@ pub async fn get_accounts<T: AccountsRepository>(
                     balance: acc.balance,
                 })
                 .collect(),
-        })),
-
-        Err(_) => HttpResponse::InternalServerError()
-            .body("Cannot geet Accounts for customer due to internal server error"),
-    }
+        })))
 }
 
 pub async fn get_account<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<(i32, i32)>,
-) -> Result<Json<AccountRest>, Error> {
+) -> Result<HttpResponse, Error> {
     let (customer_id, account_id) = path.into_inner();
 
     println!(
@@ -79,20 +76,22 @@ pub async fn get_account<T: AccountsRepository>(
         .map_err(|err| error::ErrorInternalServerError(err))?
         .map_err(|err| match err {
             RepoError::NotFound => error::ErrorNotFound(err),
-            RepoError::Other => error::ErrorInternalServerError(err),
+            _ => error::ErrorInternalServerError(err),
         })?;
 
-    Ok(web::Json(AccountRest {
-        id: account.id,
-        customer_id: account.customer_id,
-        balance: account.balance,
-    }))
+    Ok(HttpResponse::Ok()
+        .insert_header(ContentType::json())
+        .json(web::Json(AccountRest {
+            id: account.id,
+            customer_id: account.customer_id,
+            balance: account.balance,
+        })))
 }
 
 pub async fn delete_account<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<(i32, i32)>,
-) -> HttpResponse {
+) -> Result<HttpResponse, Error> {
     let (customer_id, account_id) = path.into_inner();
 
     println!(
@@ -100,18 +99,12 @@ pub async fn delete_account<T: AccountsRepository>(
         account_id, customer_id
     );
 
-    let res = web::block(move || accounts_repo.delete_account(customer_id, account_id)).await;
+    web::block(move || accounts_repo.delete_account(customer_id, account_id))
+        .await
+        .map_err(|err| error::ErrorInternalServerError(err))?
+        .map_err(|err| error::ErrorInternalServerError(err))?;
 
-    match res {
-        Ok(_) => HttpResponse::NoContent().body("Successfully deleted account"),
-
-        Err(err) => {
-            println!("error ttrying to delete account {}", err);
-
-            HttpResponse::InternalServerError()
-                .body("Delete account failed due to internal server error")
-        }
-    }
+    Ok(HttpResponse::NoContent().body(""))
 }
 
 #[cfg(test)]
@@ -131,29 +124,38 @@ mod tests {
     #[actix_web::test]
     async fn test_create_account_success() {
         let customer_id = 1;
+        let account_id = 2;
 
         let mut mock_repo = MockAccountsRepository::new();
         mock_repo
             .expect_create_account()
             .with(eq(customer_id))
             .times(1)
-            .returning(move |_| Account {
-                id: 1,
-                customer_id,
-                balance: 3,
+            .returning(move |_| {
+                Ok(Account {
+                    id: account_id,
+                    customer_id,
+                    balance: 3,
+                })
             });
 
-        let res = create_account(Data::new(mock_repo), customer_id.into()).await;
-        let actual = to_bytes(res.into_body()).await.unwrap();
+        let res = create_account(Data::new(mock_repo), customer_id.into())
+            .await
+            .unwrap();
 
-        let expected = serde_json::to_string(&AccountRest {
-            id: 1,
-            customer_id: 1,
+        let actual_status = res.status();
+        let actual_body = to_bytes(res.into_body()).await.unwrap();
+
+        let expected_status = StatusCode::CREATED;
+        let expected_body = serde_json::to_string(&AccountRest {
+            id: account_id,
+            customer_id,
             balance: 3,
         })
         .unwrap();
 
-        assert_eq!(expected, actual)
+        assert_eq!(expected_status, actual_status);
+        assert_eq!(expected_body, actual_body)
     }
 
     #[actix_web::test]
@@ -166,7 +168,7 @@ mod tests {
             .with(eq(customer_id))
             .times(1)
             .returning(move |_| {
-                vec![
+                Ok(vec![
                     Account {
                         id: 1,
                         customer_id: 1,
@@ -177,13 +179,18 @@ mod tests {
                         customer_id: 1,
                         balance: 5,
                     },
-                ]
+                ])
             });
 
-        let res = get_accounts(Data::new(mock_repo), customer_id.into()).await;
-        let actual = to_bytes(res.into_body()).await.unwrap();
+        let res = get_accounts(Data::new(mock_repo), customer_id.into())
+            .await
+            .unwrap();
 
-        let expected = serde_json::to_string(&AccountsRest {
+        let actual_status = res.status();
+        let actual_body = to_bytes(res.into_body()).await.unwrap();
+
+        let expected_status = StatusCode::OK;
+        let expected_body = serde_json::to_string(&AccountsRest {
             accounts: vec![
                 AccountRest {
                     id: 1,
@@ -199,7 +206,8 @@ mod tests {
         })
         .unwrap();
 
-        assert_eq!(expected, actual)
+        assert_eq!(expected_status, actual_status);
+        assert_eq!(expected_body, actual_body)
     }
 
     #[actix_web::test]
@@ -220,12 +228,14 @@ mod tests {
                 })
             });
 
-        let actual_accounts = get_account(Data::new(mock_repo), (customer_id, account_id).into())
+        let res = get_account(Data::new(mock_repo), (customer_id, account_id).into())
             .await
             .unwrap();
 
-        let actual_body = serde_json::to_string(&actual_accounts).unwrap();
+        let actual_status = res.status();
+        let actual_body = to_bytes(res.into_body()).await.unwrap();
 
+        let expected_status = StatusCode::OK;
         let expected_body = serde_json::to_string(&AccountRest {
             id: account_id,
             customer_id,
@@ -233,6 +243,7 @@ mod tests {
         })
         .unwrap();
 
+        assert_eq!(expected_status, actual_status);
         assert_eq!(expected_body, actual_body)
     }
 
@@ -246,13 +257,18 @@ mod tests {
             .expect_delete_account()
             .with(eq(customer_id), eq(account_id))
             .times(1)
-            .returning(|_, _| ());
+            .returning(|_, _| Ok(()));
 
-        let res = delete_account(Data::new(mock_repo), (customer_id, account_id).into()).await;
+        let res = delete_account(Data::new(mock_repo), (customer_id, account_id).into())
+            .await
+            .unwrap();
 
         let actual_status = res.status();
+        let actual_body = to_bytes(res.into_body()).await.unwrap();
+
         let expected_status = StatusCode::NO_CONTENT;
 
-        assert_eq!(expected_status, actual_status)
+        assert_eq!(expected_status, actual_status);
+        assert_eq!("", actual_body)
     }
 }
