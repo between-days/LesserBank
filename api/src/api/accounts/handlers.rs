@@ -1,8 +1,9 @@
 use actix_web::http::header::ContentType;
 use actix_web::web::{Data, Path};
-use actix_web::{error, web, Error, HttpResponse};
+use actix_web::{web, HttpResponse};
 use rand::Rng;
 
+use super::error::AccountsApiError;
 use super::models::{AccountRest, AccountsRest};
 use crate::error::RepoError;
 use crate::traits::AccountsRepository;
@@ -10,7 +11,7 @@ use crate::traits::AccountsRepository;
 pub async fn create_account<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<i32>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse, AccountsApiError> {
     let customer_id = path.into_inner();
     let account_id = rand::thread_rng().gen_range(0..100);
 
@@ -21,8 +22,8 @@ pub async fn create_account<T: AccountsRepository>(
 
     let account = web::block(move || accounts_repo.create_account(customer_id))
         .await
-        .map_err(|err| error::ErrorInternalServerError(err))?
-        .map_err(|err| error::ErrorInternalServerError(err))?;
+        .map_err(|_| AccountsApiError::InternalError)?
+        .map_err(|_| AccountsApiError::InternalError)?;
 
     Ok(HttpResponse::Created()
         .insert_header(ContentType::json())
@@ -36,15 +37,15 @@ pub async fn create_account<T: AccountsRepository>(
 pub async fn get_accounts<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<i32>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse, AccountsApiError> {
     let customer_id = path.into_inner();
 
     println!("Trying to get accounts for customer {}", customer_id);
 
     let accounts = web::block(move || accounts_repo.get_accounts(customer_id))
         .await
-        .map_err(|err| error::ErrorInternalServerError(err))?
-        .map_err(|err| error::ErrorInternalServerError(err))?;
+        .map_err(|_| AccountsApiError::InternalError)?
+        .map_err(|_| AccountsApiError::InternalError)?;
 
     Ok(HttpResponse::Ok()
         .insert_header(ContentType::json())
@@ -63,7 +64,7 @@ pub async fn get_accounts<T: AccountsRepository>(
 pub async fn get_account<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<(i32, i32)>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse, AccountsApiError> {
     let (customer_id, account_id) = path.into_inner();
 
     println!(
@@ -73,10 +74,10 @@ pub async fn get_account<T: AccountsRepository>(
 
     let account = web::block(move || accounts_repo.get_account(customer_id, account_id))
         .await
-        .map_err(|err| error::ErrorInternalServerError(err))?
+        .map_err(|_| AccountsApiError::InternalError)?
         .map_err(|err| match err {
-            RepoError::NotFound => error::ErrorNotFound(err),
-            _ => error::ErrorInternalServerError(err),
+            RepoError::NotFound => AccountsApiError::NotFound,
+            _ => AccountsApiError::InternalError,
         })?;
 
     Ok(HttpResponse::Ok()
@@ -91,7 +92,7 @@ pub async fn get_account<T: AccountsRepository>(
 pub async fn delete_account<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<(i32, i32)>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse, AccountsApiError> {
     let (customer_id, account_id) = path.into_inner();
 
     println!(
@@ -101,8 +102,8 @@ pub async fn delete_account<T: AccountsRepository>(
 
     web::block(move || accounts_repo.delete_account(customer_id, account_id))
         .await
-        .map_err(|err| error::ErrorInternalServerError(err))?
-        .map_err(|err| error::ErrorInternalServerError(err))?;
+        .map_err(|_| AccountsApiError::InternalError)?
+        .map_err(|_| AccountsApiError::InternalError)?;
 
     Ok(HttpResponse::NoContent().body(""))
 }
