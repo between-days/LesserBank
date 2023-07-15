@@ -1,3 +1,5 @@
+// shared error definitions
+
 use core::fmt;
 
 #[derive(Debug)]

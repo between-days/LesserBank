@@ -1,6 +1,6 @@
 use actix_web::{dev::Server, get, web::Data, App, HttpResponse, HttpServer, Responder};
-use api::accounts::routes::configure_accounts_api;
-use repository::accounts::accounts_repo::AccountsRepoImpl;
+use api::accounts::configure_accounts_api;
+use repository::accounts_repository::AccountsRepoImpl;
 
 mod api;
 mod error;

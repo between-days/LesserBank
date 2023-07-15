@@ -1,3 +1,5 @@
+// shared trait definitions
+
 use crate::{error::RepoError, models::Account};
 
 #[cfg(test)]

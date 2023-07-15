@@ -11,7 +11,7 @@ use crate::traits::AccountsRepository;
 pub async fn create_account<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<i32>,
-) -> Result<HttpResponse, AccountsApiError> {
+) -> Result<HttpResponse, actix_web::Error> {
     let customer_id = path.into_inner();
     let account_id = rand::thread_rng().gen_range(0..100);
 
@@ -37,7 +37,7 @@ pub async fn create_account<T: AccountsRepository>(
 pub async fn get_accounts<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<i32>,
-) -> Result<HttpResponse, AccountsApiError> {
+) -> Result<HttpResponse, actix_web::Error> {
     let customer_id = path.into_inner();
 
     println!("Trying to get accounts for customer {}", customer_id);
@@ -64,7 +64,7 @@ pub async fn get_accounts<T: AccountsRepository>(
 pub async fn get_account<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<(i32, i32)>,
-) -> Result<HttpResponse, AccountsApiError> {
+) -> Result<HttpResponse, actix_web::Error> {
     let (customer_id, account_id) = path.into_inner();
 
     println!(
@@ -92,7 +92,7 @@ pub async fn get_account<T: AccountsRepository>(
 pub async fn delete_account<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<(i32, i32)>,
-) -> Result<HttpResponse, AccountsApiError> {
+) -> Result<HttpResponse, actix_web::Error> {
     let (customer_id, account_id) = path.into_inner();
 
     println!(
