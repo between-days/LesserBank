@@ -10,7 +10,7 @@ use actix_web::{
 pub enum AccountsApiError {
     NotFound,
     InternalError,
-   Unauthorized
+    Unauthorized,
 }
 
 impl fmt::Display for AccountsApiError {
@@ -26,7 +26,7 @@ impl error::ResponseError for AccountsApiError {
             .body(match self {
                 Self::NotFound => "Entity not found",
                 Self::InternalError => "Internal server error",
-                Self::Unauthorized => "Unauthorized"
+                Self::Unauthorized => "Unauthorized",
             })
     }
 
@@ -34,7 +34,7 @@ impl error::ResponseError for AccountsApiError {
         match *self {
             AccountsApiError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             AccountsApiError::NotFound => StatusCode::NOT_FOUND,
-            AccountsApiError::Unauthorized => StatusCode::UNAUTHORIZED
+            AccountsApiError::Unauthorized => StatusCode::UNAUTHORIZED,
         }
     }
 }

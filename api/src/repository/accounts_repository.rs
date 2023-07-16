@@ -35,7 +35,7 @@ impl AccountsRepository for AccountsRepoImpl {
             .map_err(|_| RepoError::Other)?)
     }
 
-    fn get_accounts(&self, customer_id: i32) -> Result<Vec<Account>, RepoError> {
+    fn get_accounts_by_customer(&self, customer_id: i32) -> Result<Vec<Account>, RepoError> {
         let mut conn = self.pool.get().map_err(|_| {
             println!("couldn't get db connection from pool");
             RepoError::ConnectionError
@@ -49,14 +49,13 @@ impl AccountsRepository for AccountsRepoImpl {
             .map_err(|_| RepoError::Other)?)
     }
 
-    fn get_account(&self, customer_id: i32, account_id: i32) -> Result<Account, RepoError> {
+    fn get_account(&self, account_id: i32) -> Result<Account, RepoError> {
         let mut conn = self.pool.get().map_err(|_| {
             println!("couldn't get db connection from pool");
             RepoError::ConnectionError
         })?;
 
         Ok(accounts::table
-            .filter(accounts::customer_id.eq(customer_id))
             .filter(accounts::id.eq(account_id))
             .select(Account::as_select())
             .get_result(&mut conn)
@@ -66,19 +65,15 @@ impl AccountsRepository for AccountsRepoImpl {
             })?)
     }
 
-    fn delete_account(&self, customer_id: i32, account_id: i32) -> Result<(), RepoError> {
+    fn delete_account(&self, account_id: i32) -> Result<(), RepoError> {
         let mut conn = self.pool.get().map_err(|_| {
             println!("couldn't get db connection from pool");
             RepoError::ConnectionError
         })?;
 
-        diesel::delete(
-            accounts::table
-                .filter(accounts::customer_id.eq(customer_id))
-                .filter(accounts::id.eq(account_id)),
-        )
-        .execute(&mut conn)
-        .map_err(|_| RepoError::Other)?;
+        diesel::delete(accounts::table.filter(accounts::id.eq(account_id)))
+            .execute(&mut conn)
+            .map_err(|_| RepoError::Other)?;
 
         Ok(())
     }

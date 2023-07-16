@@ -1,7 +1,6 @@
 use actix_web::http::header::ContentType;
 use actix_web::web::{Data, Path};
 use actix_web::{web, HttpResponse};
-use rand::Rng;
 
 use super::error::AccountsApiError;
 use super::models::{AccountRest, AccountsRest, NewAccountRest};
@@ -16,18 +15,17 @@ pub async fn create_account<T: AccountsRepository>(
     payload: web::Json<NewAccountRest>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let customer_id = path.into_inner();
-    let account_id = rand::thread_rng().gen_range(0..100);
-
-    println!(
-        "Trying to create account {} for customer {}",
-        account_id, customer_id
-    );
 
     let new_account: NewAccount = payload.into_inner().into();
 
     if new_account.customer_id != customer_id {
         return Err(AccountsApiError::Unauthorized.into());
     }
+
+    println!(
+        "Trying to create {:?} account for customer {}",
+        new_account.account_type, customer_id
+    );
 
     let account = web::block(move || accounts_repo.create_account(new_account))
         .await
@@ -39,7 +37,7 @@ pub async fn create_account<T: AccountsRepository>(
         .json(web::Json::<AccountRest>(account.into())))
 }
 
-pub async fn get_accounts<T: AccountsRepository>(
+pub async fn get_accounts_for_customer<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<i32>,
 ) -> Result<HttpResponse, actix_web::Error> {
@@ -47,7 +45,7 @@ pub async fn get_accounts<T: AccountsRepository>(
 
     println!("Trying to get accounts for customer {}", customer_id);
 
-    let accounts = web::block(move || accounts_repo.get_accounts(customer_id))
+    let accounts = web::block(move || accounts_repo.get_accounts_by_customer(customer_id))
         .await
         .map_err(|_| AccountsApiError::InternalError)?
         .map_err(|_| AccountsApiError::InternalError)?;
@@ -68,13 +66,17 @@ pub async fn get_account<T: AccountsRepository>(
         account_id, customer_id
     );
 
-    let account = web::block(move || accounts_repo.get_account(customer_id, account_id))
+    let account = web::block(move || accounts_repo.get_account(account_id))
         .await
         .map_err(|_| AccountsApiError::InternalError)?
         .map_err(|err| match err {
             RepoError::NotFound => AccountsApiError::NotFound,
             _ => AccountsApiError::InternalError,
         })?;
+
+    if account.customer_id != customer_id {
+        return Err(AccountsApiError::Unauthorized.into());
+    }
 
     Ok(HttpResponse::Ok()
         .insert_header(ContentType::json())
@@ -92,10 +94,33 @@ pub async fn delete_account<T: AccountsRepository>(
         account_id, customer_id
     );
 
-    web::block(move || accounts_repo.delete_account(customer_id, account_id))
-        .await
-        .map_err(|_| AccountsApiError::InternalError)?
-        .map_err(|_| AccountsApiError::InternalError)?;
+    web::block(move || {
+        let get_acc_res = accounts_repo.get_account(account_id);
+
+        let check_account_error: Option<AccountsApiError> = match get_acc_res {
+            Ok(acc) => {
+                if acc.customer_id != customer_id {
+                    Some(AccountsApiError::Unauthorized)
+                } else {
+                    None
+                }
+            }
+            Err(RepoError::NotFound) => None,
+            _ => Some(AccountsApiError::InternalError),
+        };
+
+        if check_account_error.is_some() {
+            let cc = check_account_error.unwrap();
+            return Err(cc);
+        }
+
+        accounts_repo
+            .delete_account(account_id)
+            .map_err(|_| AccountsApiError::InternalError)
+    })
+    .await
+    .map_err(|_| AccountsApiError::InternalError)?
+    .map_err(|err| err)?;
 
     Ok(HttpResponse::NoContent().body(""))
 }
@@ -104,9 +129,11 @@ pub async fn delete_account<T: AccountsRepository>(
 mod tests {
     use crate::{
         api::accounts::{
-            handlers::{create_account, delete_account, get_account, get_accounts},
+            error::AccountsApiError,
+            handlers::{create_account, delete_account, get_account, get_accounts_for_customer},
             models::{AccountRest, AccountTypeRest, AccountsRest, NewAccountRest},
         },
+        error::RepoError,
         models::{Account, AccountType, NewAccount},
         traits::MockAccountsRepository,
     };
@@ -116,7 +143,7 @@ mod tests {
         http::StatusCode,
         web::{Data, Json},
     };
-    use mockall::predicate::eq;
+    use mockall::{predicate::eq, Sequence};
 
     #[actix_web::test]
     async fn test_create_account_success() {
@@ -143,21 +170,13 @@ mod tests {
                 })
             });
 
-        let result = create_account(
+        let res = create_account(
             Data::new(mock_repo),
             customer_id.into(),
             Json(new_account_rest),
         )
-        .await;
-        // .unwrap();
-
-        let res = match result {
-            Ok(res) => res,
-            Err(err) => {
-                println!("got error: {}", err);
-                panic!("got error: {}", err)
-            }
-        };
+        .await
+        .unwrap();
 
         let actual_status = res.status();
         let actual_body = to_bytes(res.into_body()).await.unwrap();
@@ -181,7 +200,7 @@ mod tests {
 
         let mut mock_repo = MockAccountsRepository::new();
         mock_repo
-            .expect_get_accounts()
+            .expect_get_accounts_by_customer()
             .with(eq(customer_id))
             .times(1)
             .returning(move |_| {
@@ -201,7 +220,7 @@ mod tests {
                 ])
             });
 
-        let res = get_accounts(Data::new(mock_repo), customer_id.into())
+        let res = get_accounts_for_customer(Data::new(mock_repo), customer_id.into())
             .await
             .unwrap();
 
@@ -246,9 +265,9 @@ mod tests {
         let mut mock_repo = MockAccountsRepository::new();
         mock_repo
             .expect_get_account()
-            .with(eq(customer_id), eq(account_id))
+            .with(eq(account_id))
             .times(1)
-            .returning(move |_, _| Ok(account));
+            .returning(move |_| Ok(account));
 
         let res = get_account(Data::new(mock_repo), (customer_id, account_id).into())
             .await
@@ -269,12 +288,30 @@ mod tests {
         let customer_id = 1;
         let account_id = 2;
 
+        let account = Account {
+            id: account_id,
+            customer_id,
+            balance: 3,
+            account_type: AccountType::Savings,
+        };
+
+        let mut seq = Sequence::new();
+
         let mut mock_repo = MockAccountsRepository::new();
+
+        mock_repo
+            .expect_get_account()
+            .with(eq(account_id))
+            .times(1)
+            .returning(move |_| Ok(account))
+            .in_sequence(&mut seq);
+
         mock_repo
             .expect_delete_account()
-            .with(eq(customer_id), eq(account_id))
+            .with(eq(account_id))
             .times(1)
-            .returning(|_, _| Ok(()));
+            .returning(|_| Ok(()))
+            .in_sequence(&mut seq);
 
         let res = delete_account(Data::new(mock_repo), (customer_id, account_id).into())
             .await
@@ -287,5 +324,85 @@ mod tests {
 
         assert_eq!(expected_status, actual_status);
         assert_eq!("", actual_body)
+    }
+
+    #[actix_web::test]
+    async fn test_delete_account_not_found_success() {
+        let customer_id = 5;
+        let account_id = 2;
+
+        let mut seq = Sequence::new();
+
+        let mut mock_repo = MockAccountsRepository::new();
+
+        mock_repo
+            .expect_get_account()
+            .with(eq(account_id))
+            .times(1)
+            .returning(move |_| Err(crate::error::RepoError::NotFound))
+            .in_sequence(&mut seq);
+
+        mock_repo
+            .expect_delete_account()
+            .with(eq(account_id))
+            .times(1)
+            .returning(|_| Ok(()))
+            .in_sequence(&mut seq);
+
+        let res = delete_account(Data::new(mock_repo), (customer_id, account_id).into())
+            .await
+            .unwrap();
+
+        let actual_status = res.status();
+        let actual_body = to_bytes(res.into_body()).await.unwrap();
+
+        let expected_status = StatusCode::NO_CONTENT;
+
+        assert_eq!(expected_status, actual_status);
+        assert_eq!("", actual_body)
+    }
+
+    #[actix_web::test]
+    async fn test_delete_account_unauthorized_error() {
+        let customer_id = 5;
+        let account_id = 2;
+        let wrong_customer_id = 2;
+
+        let account = Account {
+            id: account_id,
+            customer_id,
+            balance: 3,
+            account_type: AccountType::Savings,
+        };
+
+        let mut mock_repo = MockAccountsRepository::new();
+        mock_repo
+            .expect_get_account()
+            .with(eq(account_id))
+            .times(1)
+            .returning(move |_| Ok(account));
+
+        let res =
+            delete_account(Data::new(mock_repo), (wrong_customer_id, account_id).into()).await;
+
+        assert!(res.is_err_and(|e| { e.to_string() == AccountsApiError::Unauthorized.to_string() }));
+    }
+    #[actix_web::test]
+    async fn test_delete_account_internal_error() {
+        let customer_id = 5;
+        let account_id = 2;
+
+        let mut mock_repo = MockAccountsRepository::new();
+        mock_repo
+            .expect_get_account()
+            .with(eq(account_id))
+            .times(1)
+            .returning(move |_| Err(RepoError::Other));
+
+        let res = delete_account(Data::new(mock_repo), (customer_id, account_id).into()).await;
+
+        assert!(
+            res.is_err_and(|e| { e.to_string() == AccountsApiError::InternalError.to_string() })
+        );
     }
 }
