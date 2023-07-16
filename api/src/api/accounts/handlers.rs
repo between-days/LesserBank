@@ -4,13 +4,16 @@ use actix_web::{web, HttpResponse};
 use rand::Rng;
 
 use super::error::AccountsApiError;
-use super::models::{AccountRest, AccountsRest};
+use super::models::{AccountRest, AccountsRest, NewAccountRest};
+
 use crate::error::RepoError;
+use crate::models::NewAccount;
 use crate::traits::AccountsRepository;
 
 pub async fn create_account<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<i32>,
+    payload: web::Json<NewAccountRest>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let customer_id = path.into_inner();
     let account_id = rand::thread_rng().gen_range(0..100);
@@ -20,18 +23,20 @@ pub async fn create_account<T: AccountsRepository>(
         account_id, customer_id
     );
 
-    let account = web::block(move || accounts_repo.create_account(customer_id))
+    let new_account: NewAccount = payload.into_inner().into();
+
+    if new_account.customer_id != customer_id {
+        return Err(AccountsApiError::Unauthorized.into());
+    }
+
+    let account = web::block(move || accounts_repo.create_account(new_account))
         .await
         .map_err(|_| AccountsApiError::InternalError)?
         .map_err(|_| AccountsApiError::InternalError)?;
 
     Ok(HttpResponse::Created()
         .insert_header(ContentType::json())
-        .json(web::Json(AccountRest {
-            id: account.id,
-            customer_id: account.customer_id,
-            balance: account.balance,
-        })))
+        .json(web::Json::<AccountRest>(account.into())))
 }
 
 pub async fn get_accounts<T: AccountsRepository>(
@@ -49,16 +54,7 @@ pub async fn get_accounts<T: AccountsRepository>(
 
     Ok(HttpResponse::Ok()
         .insert_header(ContentType::json())
-        .json(web::Json(AccountsRest {
-            accounts: accounts
-                .iter()
-                .map(|acc| AccountRest {
-                    id: acc.id,
-                    customer_id: acc.customer_id,
-                    balance: acc.balance,
-                })
-                .collect(),
-        })))
+        .json(web::Json::<AccountsRest>(accounts.into())))
 }
 
 pub async fn get_account<T: AccountsRepository>(
@@ -82,11 +78,7 @@ pub async fn get_account<T: AccountsRepository>(
 
     Ok(HttpResponse::Ok()
         .insert_header(ContentType::json())
-        .json(web::Json(AccountRest {
-            id: account.id,
-            customer_id: account.customer_id,
-            balance: account.balance,
-        })))
+        .json(web::Json::<AccountRest>(account.into())))
 }
 
 pub async fn delete_account<T: AccountsRepository>(
@@ -113,13 +105,17 @@ mod tests {
     use crate::{
         api::accounts::{
             handlers::{create_account, delete_account, get_account, get_accounts},
-            models::{AccountRest, AccountsRest},
+            models::{AccountRest, AccountTypeRest, AccountsRest, NewAccountRest},
         },
-        models::Account,
+        models::{Account, AccountType, NewAccount},
         traits::MockAccountsRepository,
     };
 
-    use actix_web::{body::to_bytes, http::StatusCode, web::Data};
+    use actix_web::{
+        body::to_bytes,
+        http::StatusCode,
+        web::{Data, Json},
+    };
     use mockall::predicate::eq;
 
     #[actix_web::test]
@@ -127,22 +123,41 @@ mod tests {
         let customer_id = 1;
         let account_id = 2;
 
+        let new_account_rest = NewAccountRest {
+            customer_id,
+            balance: 1,
+            account_type: AccountTypeRest::Savings,
+        };
+
         let mut mock_repo = MockAccountsRepository::new();
         mock_repo
             .expect_create_account()
-            .with(eq(customer_id))
+            .with(eq::<NewAccount>(new_account_rest.into()))
             .times(1)
             .returning(move |_| {
                 Ok(Account {
                     id: account_id,
                     customer_id,
                     balance: 3,
+                    account_type: AccountType::Savings,
                 })
             });
 
-        let res = create_account(Data::new(mock_repo), customer_id.into())
-            .await
-            .unwrap();
+        let result = create_account(
+            Data::new(mock_repo),
+            customer_id.into(),
+            Json(new_account_rest),
+        )
+        .await;
+        // .unwrap();
+
+        let res = match result {
+            Ok(res) => res,
+            Err(err) => {
+                println!("got error: {}", err);
+                panic!("got error: {}", err)
+            }
+        };
 
         let actual_status = res.status();
         let actual_body = to_bytes(res.into_body()).await.unwrap();
@@ -152,6 +167,7 @@ mod tests {
             id: account_id,
             customer_id,
             balance: 3,
+            account_type: AccountTypeRest::Savings,
         })
         .unwrap();
 
@@ -174,11 +190,13 @@ mod tests {
                         id: 1,
                         customer_id: 1,
                         balance: 4,
+                        account_type: AccountType::Savings,
                     },
                     Account {
                         id: 2,
                         customer_id: 1,
                         balance: 5,
+                        account_type: AccountType::Savings,
                     },
                 ])
             });
@@ -197,11 +215,13 @@ mod tests {
                     id: 1,
                     customer_id: 1,
                     balance: 4,
+                    account_type: AccountTypeRest::Savings,
                 },
                 AccountRest {
                     id: 2,
                     customer_id: 1,
                     balance: 5,
+                    account_type: AccountTypeRest::Savings,
                 },
             ],
         })
@@ -216,18 +236,19 @@ mod tests {
         let customer_id = 1;
         let account_id = 2;
 
+        let account = Account {
+            id: account_id,
+            customer_id,
+            balance: 3,
+            account_type: AccountType::Savings,
+        };
+
         let mut mock_repo = MockAccountsRepository::new();
         mock_repo
             .expect_get_account()
             .with(eq(customer_id), eq(account_id))
             .times(1)
-            .returning(move |customer_id, id| {
-                Ok(Account {
-                    id,
-                    customer_id,
-                    balance: 3,
-                })
-            });
+            .returning(move |_, _| Ok(account));
 
         let res = get_account(Data::new(mock_repo), (customer_id, account_id).into())
             .await
@@ -237,12 +258,7 @@ mod tests {
         let actual_body = to_bytes(res.into_body()).await.unwrap();
 
         let expected_status = StatusCode::OK;
-        let expected_body = serde_json::to_string(&AccountRest {
-            id: account_id,
-            customer_id,
-            balance: 3,
-        })
-        .unwrap();
+        let expected_body = serde_json::to_string::<AccountRest>(&account.into()).unwrap();
 
         assert_eq!(expected_status, actual_status);
         assert_eq!(expected_body, actual_body)

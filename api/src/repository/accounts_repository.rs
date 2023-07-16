@@ -22,16 +22,12 @@ impl AccountsRepoImpl {
 }
 
 impl AccountsRepository for AccountsRepoImpl {
-    fn create_account(&self, customer_id: i32) -> Result<Account, RepoError> {
+    fn create_account(&self, new_account: NewAccount) -> Result<Account, RepoError> {
         let mut conn = self.pool.get().map_err(|_| {
             println!("couldn't get db connection from pool");
             RepoError::ConnectionError
         })?;
 
-        let new_account = NewAccount {
-            customer_id,
-            balance: 0,
-        };
         Ok(diesel::insert_into(accounts::table)
             .values(&new_account)
             .returning(Account::as_returning())
