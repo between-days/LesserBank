@@ -14,9 +14,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      - name: Restore Rust Cache
+        id: rust-cache-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            api/target
+          key: ${{ runner.os }}-rust-cache
+
       - name: Build
         working-directory: ./api
         run: cargo build --verbose
+
       - name: Run tests
         working-directory: ./api
         run: cargo test --verbose
+
+      - name: Save Rust Cache
+        id: rust-cache-save
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            api/target
+          key: ${{ steps.rust-cache-restore.outputs.cache-primary-key }}
