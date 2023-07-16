@@ -184,7 +184,7 @@ mod tests {
         let actual_body = to_bytes(res.into_body()).await.unwrap();
 
         let expected_status = StatusCode::CREATED;
-        let expected_body = serde_json::to_string(&account).unwrap();
+        let expected_body = serde_json::to_string(&AccountRest::from(account)).unwrap();
 
         assert_eq!(expected_status, actual_status);
         assert_eq!(expected_body, actual_body)
