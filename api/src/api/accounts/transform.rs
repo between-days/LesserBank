@@ -50,3 +50,13 @@ impl From<NewAccountRest> for NewAccount {
         }
     }
 }
+
+impl From<NewAccount> for NewAccountRest {
+    fn from(account: NewAccount) -> Self {
+        NewAccountRest {
+            customer_id: account.customer_id,
+            balance: account.balance,
+            account_type: account.account_type.into(),
+        }
+    }
+}

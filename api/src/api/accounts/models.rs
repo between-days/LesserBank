@@ -15,7 +15,7 @@ pub struct AccountRest {
     pub account_type: AccountTypeRest,
 }
 
-#[derive(Deserialize, Copy, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq)]
 pub struct NewAccountRest {
     pub customer_id: i32,
     pub balance: i32,

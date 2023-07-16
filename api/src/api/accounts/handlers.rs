@@ -127,6 +127,8 @@ pub async fn delete_account<T: AccountsRepository>(
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use crate::{
         api::accounts::{
             error::AccountsApiError,
@@ -156,19 +158,19 @@ mod tests {
             account_type: AccountTypeRest::Savings,
         };
 
+        let account = Account {
+            id: account_id,
+            customer_id,
+            balance: 1,
+            account_type: AccountType::Savings,
+        };
+
         let mut mock_repo = MockAccountsRepository::new();
         mock_repo
             .expect_create_account()
             .with(eq::<NewAccount>(new_account_rest.into()))
             .times(1)
-            .returning(move |_| {
-                Ok(Account {
-                    id: account_id,
-                    customer_id,
-                    balance: 3,
-                    account_type: AccountType::Savings,
-                })
-            });
+            .returning(move |_| Ok(account));
 
         let res = create_account(
             Data::new(mock_repo),
@@ -182,16 +184,39 @@ mod tests {
         let actual_body = to_bytes(res.into_body()).await.unwrap();
 
         let expected_status = StatusCode::CREATED;
-        let expected_body = serde_json::to_string(&AccountRest {
-            id: account_id,
-            customer_id,
-            balance: 3,
-            account_type: AccountTypeRest::Savings,
-        })
-        .unwrap();
+        let expected_body = serde_json::to_string(&account).unwrap();
 
         assert_eq!(expected_status, actual_status);
         assert_eq!(expected_body, actual_body)
+    }
+
+    #[actix_web::test]
+    async fn test_create_account_internal_error() {
+        let customer_id = 5;
+
+        let new_account = NewAccount {
+            customer_id,
+            balance: 3,
+            account_type: AccountType::Savings,
+        };
+
+        let mut mock_repo = MockAccountsRepository::new();
+        mock_repo
+            .expect_create_account()
+            .with(eq(new_account))
+            .times(1)
+            .returning(move |_| Err(RepoError::Other));
+
+        let res = create_account(
+            Data::new(mock_repo),
+            customer_id.into(),
+            Json(new_account.into()),
+        )
+        .await;
+
+        assert!(
+            res.is_err_and(|e| { e.to_string() == AccountsApiError::InternalError.to_string() })
+        );
     }
 
     #[actix_web::test]
@@ -251,6 +276,24 @@ mod tests {
     }
 
     #[actix_web::test]
+    async fn test_get_accounts_internal_error() {
+        let customer_id = 1;
+
+        let mut mock_repo = MockAccountsRepository::new();
+        mock_repo
+            .expect_get_accounts_by_customer()
+            .with(eq(customer_id))
+            .times(1)
+            .returning(move |_| Err(RepoError::Other));
+
+        let res = get_accounts_for_customer(Data::new(mock_repo), customer_id.into()).await;
+
+        assert!(
+            res.is_err_and(|e| { e.to_string() == AccountsApiError::InternalError.to_string() })
+        );
+    }
+
+    #[actix_web::test]
     async fn test_get_account_success() {
         let customer_id = 1;
         let account_id = 2;
@@ -281,6 +324,67 @@ mod tests {
 
         assert_eq!(expected_status, actual_status);
         assert_eq!(expected_body, actual_body)
+    }
+
+    #[actix_web::test]
+    async fn test_get_account_internal_error() {
+        let customer_id = 1;
+        let account_id = 4;
+
+        let mut mock_repo = MockAccountsRepository::new();
+        mock_repo
+            .expect_get_account()
+            .with(eq(account_id))
+            .times(1)
+            .returning(move |_| Err(RepoError::Other));
+
+        let res = get_account(Data::new(mock_repo), (customer_id, account_id).into()).await;
+
+        assert!(
+            res.is_err_and(|e| { e.to_string() == AccountsApiError::InternalError.to_string() })
+        );
+    }
+
+    #[actix_web::test]
+    async fn test_get_account_not_found_error() {
+        let customer_id = 1;
+        let account_id = 4;
+
+        let mut mock_repo = MockAccountsRepository::new();
+        mock_repo
+            .expect_get_account()
+            .with(eq(account_id))
+            .times(1)
+            .returning(move |_| Err(RepoError::NotFound));
+
+        let res = get_account(Data::new(mock_repo), (customer_id, account_id).into()).await;
+
+        assert!(res.is_err_and(|e| { e.to_string() == AccountsApiError::NotFound.to_string() }));
+    }
+
+    #[actix_web::test]
+    async fn test_get_account_unauthorized_error() {
+        let customer_id = 1;
+        let wrong_customer_id = 5;
+        let account_id = 4;
+
+        let account = Account {
+            id: account_id,
+            customer_id,
+            balance: 3,
+            account_type: AccountType::Savings,
+        };
+
+        let mut mock_repo = MockAccountsRepository::new();
+        mock_repo
+            .expect_get_account()
+            .with(eq(account_id))
+            .times(1)
+            .returning(move |_| Ok(account));
+
+        let res = get_account(Data::new(mock_repo), (wrong_customer_id, account_id).into()).await;
+
+        assert!(res.is_err_and(|e| { e.to_string() == AccountsApiError::Unauthorized.to_string() }));
     }
 
     #[actix_web::test]
