@@ -10,20 +10,25 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  unit-tests:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
       - name: Cache
         uses: Swatinem/rust-cache@v2.5.1
         with:
           workspaces: api -> target
-
       - name: Build
         working-directory: api
         run: cargo build --verbose
-
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache
+        uses: Swatinem/rust-cache@v2.5.1
+        with:
+          workspaces: api -> target
       - name: Unit Tests
         working-directory: api
         run: cargo test --verbose
