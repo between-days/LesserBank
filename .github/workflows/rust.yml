@@ -17,7 +17,6 @@ jobs:
       - name: Cache
         uses: Swatinem/rust-cache@v2.5.1
         with:
-          workspaces: api -> target
           shared-key: rust-dev
       - name: Clippy
         run: rustup component add clippy && cargo clippy
@@ -30,7 +29,6 @@ jobs:
       - name: Cache
         uses: Swatinem/rust-cache@v2.5.1
         with:
-          workspaces: api -> target
           shared-key: rust-dev
       - name: Build
         run: cargo build --verbose
@@ -42,7 +40,6 @@ jobs:
       - name: Cache
         uses: Swatinem/rust-cache@v2.5.1
         with:
-          workspaces: api -> target
           shared-key: rust-dev
       - name: Unit Tests
         run: cargo test --verbose
