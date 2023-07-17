@@ -2,3 +2,4 @@
 target
 .env
 api/**/Cargo.lock
+**/.DS_Store
