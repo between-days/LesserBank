@@ -28,8 +28,7 @@ jobs:
       - name: Cache
         uses: Swatinem/rust-cache@v2.5.1
         with:
-          shared-key: rust-dev
-          save-if: "false"
+          shared-key: rust-dev-clippy
       - name: Clippy
         run: rustup component add clippy && cargo clippy
   unit-tests:
