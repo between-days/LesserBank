@@ -18,10 +18,12 @@ jobs:
         uses: Swatinem/rust-cache@v2.5.1
         with:
           workspaces: api -> target
+          shared-key: rust-dev
       - name: Build
         working-directory: api
         run: cargo build --verbose
   unit-tests:
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
