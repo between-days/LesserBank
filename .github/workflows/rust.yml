@@ -10,17 +10,21 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  clippy-check:
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - run: rustup component add clippy
-      - uses: actions-rs/clippy-check@v1
+      - uses: actions/checkout@v3
+      - name: Cache
+        uses: Swatinem/rust-cache@v2.5.1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features
+          workspaces: api -> target
+          shared-key: rust-dev
+      - name: Clippy
+        working-directory: api
+        run: rustup component add clippy && cargo clippy
+
   build:
-    needs: [clippy-check]
+    needs: [lint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
