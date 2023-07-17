@@ -10,7 +10,19 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache
+        uses: Swatinem/rust-cache@v2.5.1
+        with:
+          shared-key: rust-dev
+          save-if: "false"
+      - name: Build
+        run: cargo build --verbose
   lint:
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -20,18 +32,6 @@ jobs:
           shared-key: rust-dev
       - name: Clippy
         run: rustup component add clippy && cargo clippy
-
-  build:
-    needs: [lint]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Cache
-        uses: Swatinem/rust-cache@v2.5.1
-        with:
-          shared-key: rust-dev
-      - name: Build
-        run: cargo build --verbose
   unit-tests:
     needs: [build]
     runs-on: ubuntu-latest
