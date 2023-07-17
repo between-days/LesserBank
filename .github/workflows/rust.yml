@@ -31,6 +31,7 @@ jobs:
         uses: Swatinem/rust-cache@v2.5.1
         with:
           workspaces: api -> target
+          shared-key: rust-dev
       - name: Unit Tests
         working-directory: api
         run: cargo test --verbose
