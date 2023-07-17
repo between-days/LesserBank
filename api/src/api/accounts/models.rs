@@ -11,14 +11,14 @@ pub enum AccountTypeRest {
 pub struct AccountRest {
     pub id: i32,
     pub customer_id: i32,
-    pub balance: i32,
+    pub balance_cents: i64,
     pub account_type: AccountTypeRest,
 }
 
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq)]
 pub struct NewAccountRest {
     pub customer_id: i32,
-    pub balance: i32,
+    pub balance_cents: i64,
     pub account_type: AccountTypeRest,
 }
 

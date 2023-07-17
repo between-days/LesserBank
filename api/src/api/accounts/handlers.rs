@@ -154,14 +154,14 @@ mod tests {
 
         let new_account_rest = NewAccountRest {
             customer_id,
-            balance: 1,
+            balance_cents: 34343,
             account_type: AccountTypeRest::Savings,
         };
 
         let account = Account {
             id: account_id,
             customer_id,
-            balance: 1,
+            balance_cents: 13424234234,
             account_type: AccountType::Savings,
         };
 
@@ -196,7 +196,7 @@ mod tests {
 
         let new_account = NewAccount {
             customer_id,
-            balance: 3,
+            balance_cents: 13424234234,
             account_type: AccountType::Savings,
         };
 
@@ -233,13 +233,13 @@ mod tests {
                     Account {
                         id: 1,
                         customer_id: 1,
-                        balance: 4,
+                        balance_cents: 13424234234,
                         account_type: AccountType::Savings,
                     },
                     Account {
                         id: 2,
                         customer_id: 1,
-                        balance: 5,
+                        balance_cents: 13424234234,
                         account_type: AccountType::Savings,
                     },
                 ])
@@ -258,13 +258,13 @@ mod tests {
                 AccountRest {
                     id: 1,
                     customer_id: 1,
-                    balance: 4,
+                    balance_cents: 13424234234,
                     account_type: AccountTypeRest::Savings,
                 },
                 AccountRest {
                     id: 2,
                     customer_id: 1,
-                    balance: 5,
+                    balance_cents: 13424234234,
                     account_type: AccountTypeRest::Savings,
                 },
             ],
@@ -301,7 +301,7 @@ mod tests {
         let account = Account {
             id: account_id,
             customer_id,
-            balance: 3,
+            balance_cents: 13424234234,
             account_type: AccountType::Savings,
         };
 
@@ -371,7 +371,7 @@ mod tests {
         let account = Account {
             id: account_id,
             customer_id,
-            balance: 3,
+            balance_cents: 13424234234,
             account_type: AccountType::Savings,
         };
 
@@ -395,7 +395,7 @@ mod tests {
         let account = Account {
             id: account_id,
             customer_id,
-            balance: 3,
+            balance_cents: 13424234234,
             account_type: AccountType::Savings,
         };
 
@@ -475,7 +475,7 @@ mod tests {
         let account = Account {
             id: account_id,
             customer_id,
-            balance: 3,
+            balance_cents: 13424234234,
             account_type: AccountType::Savings,
         };
 

@@ -18,7 +18,7 @@ pub enum AccountType {
 pub struct Account {
     pub id: i32,
     pub customer_id: i32,
-    pub balance: i32,
+    pub balance_cents: i64,
     pub account_type: AccountType,
 }
 
@@ -26,6 +26,6 @@ pub struct Account {
 #[diesel(table_name = accounts)]
 pub struct NewAccount {
     pub customer_id: i32,
-    pub balance: i32,
+    pub balance_cents: i64,
     pub account_type: AccountType,
 }

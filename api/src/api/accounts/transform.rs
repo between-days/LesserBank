@@ -17,7 +17,7 @@ impl From<Account> for AccountRest {
         Self {
             id: account.id,
             customer_id: account.customer_id,
-            balance: account.balance,
+            balance_cents: account.balance_cents,
             account_type: account.account_type.into(),
         }
     }
@@ -45,7 +45,7 @@ impl From<NewAccountRest> for NewAccount {
     fn from(account: NewAccountRest) -> Self {
         NewAccount {
             customer_id: account.customer_id,
-            balance: account.balance,
+            balance_cents: account.balance_cents,
             account_type: account.account_type.into(),
         }
     }
@@ -55,7 +55,7 @@ impl From<NewAccount> for NewAccountRest {
     fn from(account: NewAccount) -> Self {
         NewAccountRest {
             customer_id: account.customer_id,
-            balance: account.balance,
+            balance_cents: account.balance_cents,
             account_type: account.account_type.into(),
         }
     }
