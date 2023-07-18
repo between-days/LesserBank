@@ -11,7 +11,12 @@ import {
 import React from 'react';
 import { CustomNavbar } from './CustomNavBar';
 
-export default function CustomAppShell(props: any) {
+interface CustomAppShellProps {
+    title: string
+    children: any
+}
+
+export default function CustomAppShell({ title, children }: CustomAppShellProps) {
     const theme = useMantineTheme();
 
     return (
@@ -42,12 +47,12 @@ export default function CustomAppShell(props: any) {
                                 mr="xl"
                             />
                         </MediaQuery>
-                        <Title>Accounts</Title>
+                        <Title>{title}</Title>
                     </div>
                 </Header>
             }
         >
-            {props.children}
+            {children}
         </AppShell>
     );
 }

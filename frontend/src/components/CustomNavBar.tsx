@@ -2,16 +2,11 @@ import { useState } from 'react';
 import { createStyles, Navbar, UnstyledButton, Tooltip, rem, Center, Stack, ThemeIcon } from '@mantine/core';
 import {
   IconHome2,
-  IconGauge,
-  IconDeviceDesktopAnalytics,
-  IconFingerprint,
-  IconCalendarStats,
-  IconUser,
-  IconSettings,
   IconSwitchHorizontal,
   IconLogout,
   IconMathLower,
 } from '@tabler/icons-react';
+import { useRouter } from 'next/router';
 
 const useStyles = createStyles((theme) => ({
   link: {
@@ -38,13 +33,7 @@ const useStyles = createStyles((theme) => ({
 
 
 const mockdata = [
-  { icon: IconHome2, label: 'Home' },
-  { icon: IconGauge, label: 'Dashboard' },
-  { icon: IconDeviceDesktopAnalytics, label: 'Analytics' },
-  { icon: IconCalendarStats, label: 'Releases' },
-  { icon: IconUser, label: 'Account' },
-  { icon: IconFingerprint, label: 'Security' },
-  { icon: IconSettings, label: 'Settings' },
+  { icon: IconHome2, label: 'Dashboard', path: "/" },
 ];
 
 interface NavbarLinkProps {
@@ -68,14 +57,15 @@ function NavbarLink({ icon: Icon, label, active, onClick }: NavbarLinkProps) {
 }
 
 export function CustomNavbar() {
-  const [active, setActive] = useState(2);
+  const router = useRouter()
+  const [active, setActive] = useState(0);
 
   const links = mockdata.map((link, index) => (
     <NavbarLink
       {...link}
       key={link.label}
       active={index === active}
-      onClick={() => setActive(index)}
+      onClick={() => router.push(link.path)}
     />
   ));
 

@@ -1,87 +1,17 @@
-import { Card, Image, Text, Group, Tooltip, Stack, Flex, ThemeIcon } from '@mantine/core';
+import { Card, Text, Group, Stack, Flex } from '@mantine/core';
 import { useHover } from '@mantine/hooks';
-import { IconCloudDollar, IconTimeDuration0 } from '@tabler/icons-react';
-
-export interface AccountCardProps {
-    name: string
-    accountType: string
-    balanceCents: number
-    accountNumber: number
-    bsb: number
-}
-
-const ACCOUNT_ICON_SIZE = "xl"
-
-function getIconForAccountType(accountType: string) {
-    switch (accountType) {
-        case "Savings":
-            return <Tooltip label={"Savings"} position="right" transitionProps={{ duration: 0 }}>
-                <ThemeIcon size={ACCOUNT_ICON_SIZE}>
-                    <IconCloudDollar />
-                </ThemeIcon>
-
-            </Tooltip>
-        case "Term Deposit":
-            return <Tooltip label={"Term Deposit"} position="right" transitionProps={{ duration: 0 }}>
-                <ThemeIcon size={ACCOUNT_ICON_SIZE}>
-                    <IconTimeDuration0 />
-                </ThemeIcon>
-
-            </Tooltip>
-        default:
-            return <Tooltip label={"Unkown Type"} position="right" transitionProps={{ duration: 0 }}>
-                <ThemeIcon size={ACCOUNT_ICON_SIZE}>
-                    <IconCloudDollar />
-                </ThemeIcon>
-            </Tooltip>
-    }
-}
-
-function getBalanceText(balanceCents: number) {
-    const balanceDollars = balanceCents / 100
-    return `$${balanceDollars.toLocaleString()}`
-}
-
-function getBsbString(bsb: number) {
-    const bsbString = bsb.toString()
-    return bsbString.substring(0, 3) + " " + bsbString.substring(3, 6)
-}
-
-function getAccountNumberString(accountNumber: number) {
-    const anString = accountNumber.toString()
-    return anString.substring(0, 3) + " " + anString.substring(3, 6) + " " + anString.substring(6, 10)
-}
-
-function getCardImage(accountType: string) {
-    switch (accountType) {
-        case "Savings":
-            return <Image
-                src="https://images.unsplash.com/photo-1579621970588-a35d0e7ab9b6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3540&q=80"
-                height={150}
-                alt="Norway"
-            />
-        case "Term Deposit":
-            return <Image
-                src="https://images.unsplash.com/photo-1531161348856-92e5c7b2e6de?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3542&q=80"
-                height={150}
-                alt="Norway"
-            />
-        default:
-            return <Image
-                src="https://images.unsplash.com/photo-1579621970588-a35d0e7ab9b6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3540&q=80"
-                height={150}
-                alt="Norway"
-            />
-    }
-}
+import { useRouter } from 'next/router';
+import { getAccountCardImage, getAccountNumberString, getBsbString, getDollarText, getIconForAccountType } from '@/UIUtils';
+import { AccountCardProps } from '@/interfaces';
 
 export default function AccountCard({ name, accountType, balanceCents, accountNumber, bsb }: AccountCardProps) {
     const { hovered, ref } = useHover();
+    const router = useRouter()
 
     return (
-        <Card ref={ref} shadow={hovered ? "xl" : "sm"} radius="md" withBorder={hovered ? false : true}>
+        <Card ref={ref} onClick={() => { router.push(`/accounts/${accountNumber}`) }} shadow={hovered ? "xl" : "sm"} radius="md" withBorder={hovered ? false : true}>
             <Card.Section>
-                {getCardImage(accountType)}
+                {getAccountCardImage(accountType)}
             </Card.Section>
 
             <Group position="apart" mt="md" mb="xs">
@@ -90,7 +20,9 @@ export default function AccountCard({ name, accountType, balanceCents, accountNu
             </Group>
 
             <Stack spacing="xs">
-                <Text color="green" weight={500} fz="xl" >Balance: {getBalanceText(balanceCents)}</Text>
+                <Text color="green" weight={500} fz="xl">
+                    Balance: {getDollarText(balanceCents)}
+                </Text>
                 <Flex
                     mih={50}
                     gap="xl"
