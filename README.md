@@ -1,6 +1,12 @@
 # lesser-bank
 
-Bank backend resume project
+Bank Resume Project
+
+# Frontend
+
+Nextjs/mantine
+
+run ```npm run dev``` from root
 
 ## Local Deployment
 
