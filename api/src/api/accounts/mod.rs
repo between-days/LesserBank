@@ -2,6 +2,7 @@ pub mod error;
 pub mod handlers;
 pub mod models;
 pub mod transform;
+pub mod util;
 
 use actix_web::web;
 

@@ -5,6 +5,7 @@ use actix_web::{web, HttpResponse};
 use super::error::AccountsApiError;
 use super::models::{AccountRest, AccountsRest, NewAccountRest};
 
+use crate::api::accounts::util::get_random_account_number;
 use crate::error::RepoError;
 use crate::models::NewAccount;
 use crate::traits::AccountsRepository;
@@ -16,11 +17,15 @@ pub async fn create_account<T: AccountsRepository>(
 ) -> Result<HttpResponse, actix_web::Error> {
     let customer_id = path.into_inner();
 
-    let new_account: NewAccount = payload.into_inner().into();
+    let mut new_account: NewAccount = payload.into_inner().into();
 
     if new_account.customer_id != customer_id {
         return Err(AccountsApiError::Unauthorized.into());
     }
+
+    // completely random for now
+    let account_number = get_random_account_number();
+    new_account.account_number = account_number;
 
     println!(
         "Trying to create {:?} account for customer {}",
@@ -133,18 +138,23 @@ mod tests {
         api::accounts::{
             error::AccountsApiError,
             handlers::{create_account, delete_account, get_account, get_accounts_for_customer},
-            models::{AccountRest, AccountTypeRest, AccountsRest, NewAccountRest},
+            models::{
+                AccountRest, AccountStatusRest, AccountTypeRest, AccountsRest, NewAccountRest,
+            },
         },
         error::RepoError,
-        models::{Account, AccountType, NewAccount},
+        models::{Account, AccountStatus, AccountType, NewAccount},
         traits::MockAccountsRepository,
     };
 
     use actix_web::{
         body::to_bytes,
         http::StatusCode,
-        web::{Data, Json},
+        test,
+        web::{self, Data, Json},
+        App,
     };
+    use chrono::{NaiveDate, NaiveDateTime};
     use mockall::{predicate::eq, Sequence};
 
     #[actix_web::test]
@@ -152,42 +162,93 @@ mod tests {
         let customer_id = 1;
         let account_id = 2;
 
-        let new_account_rest = NewAccountRest {
-            customer_id,
-            balance_cents: 34343,
-            account_type: AccountTypeRest::Savings,
-        };
-
-        let account = Account {
-            id: account_id,
-            customer_id,
-            balance_cents: 13424234234,
-            account_type: AccountType::Savings,
-        };
+        let dt: NaiveDateTime = NaiveDate::from_ymd_opt(2016, 7, 8)
+            .unwrap()
+            .and_hms_opt(9, 10, 11)
+            .unwrap();
 
         let mut mock_repo = MockAccountsRepository::new();
         mock_repo
             .expect_create_account()
-            .with(eq::<NewAccount>(new_account_rest.into()))
+            .withf(move |acc| {
+                acc.customer_id == customer_id
+                    && acc.balance_cents == 34343
+                    && acc.account_type == AccountType::Savings
+                    && acc.name == Some("abc".to_string())
+                    && acc.available_balance_cents == 0
+            })
             .times(1)
-            .returning(move |_| Ok(account));
+            .returning(move |_| {
+                Ok(Account {
+                    id: account_id,
+                    customer_id,
+                    balance_cents: 13424234234,
+                    account_type: AccountType::Savings,
+                    date_opened: dt,
+                    account_status: AccountStatus::Active,
+                    name: Some("abc".to_string()),
+                    account_number: "012345678".to_string(),
+                    available_balance_cents: 0,
+                    bsb: 123456,
+                })
+            });
 
-        let res = create_account(
-            Data::new(mock_repo),
-            customer_id.into(),
-            Json(new_account_rest),
+        let mut app = test::init_service(
+            App::new().app_data(Data::new(mock_repo)).service(
+                web::resource("/customers/{customer_id}/accounts")
+                    .route(web::post().to(create_account::<MockAccountsRepository>)),
+            ),
         )
-        .await
-        .unwrap();
+        .await;
 
-        let actual_status = res.status();
-        let actual_body = to_bytes(res.into_body()).await.unwrap();
+        let testpayload = NewAccountRest {
+            customer_id,
+            balance_cents: 34343,
+            account_type: AccountTypeRest::Savings,
+            name: Some("abc".to_string()),
+        };
 
-        let expected_status = StatusCode::CREATED;
-        let expected_body = serde_json::to_string(&AccountRest::from(account)).unwrap();
+        let resp = test::TestRequest::post()
+            .uri("/customers/1/accounts")
+            .append_header(("Content-Type", "application/json"))
+            .set_payload(serde_json::to_string(&testpayload).unwrap())
+            .send_request(&mut app)
+            .await;
 
-        assert_eq!(expected_status, actual_status);
-        assert_eq!(expected_body, actual_body)
+        let actual_status = resp.status();
+        assert_eq!(StatusCode::CREATED, actual_status);
+
+        let expected_account = AccountRest {
+            id: account_id,
+            customer_id,
+            balance_cents: 13424234234,
+            account_type: AccountTypeRest::Savings,
+            date_opened: dt.to_string(),
+            account_status: AccountStatusRest::Active,
+            name: Some("abc".to_string()),
+            account_number: "012345678".to_string(),
+            available_balance_cents: 0,
+            bsb: 123456,
+        };
+
+        let actual_account: AccountRest = test::read_body_json(resp).await;
+        assert_eq!(expected_account.id, actual_account.id);
+        assert_eq!(expected_account.customer_id, actual_account.customer_id);
+        assert_eq!(expected_account.balance_cents, actual_account.balance_cents);
+        assert_eq!(expected_account.account_type, actual_account.account_type);
+        assert_eq!(
+            expected_account.date_opened.to_string(),
+            actual_account.date_opened
+        );
+        assert_eq!(
+            expected_account.account_status,
+            actual_account.account_status
+        );
+        assert_eq!(expected_account.name, actual_account.name);
+        assert_eq!(
+            expected_account.available_balance_cents,
+            actual_account.available_balance_cents
+        );
     }
 
     #[actix_web::test]
@@ -198,6 +259,9 @@ mod tests {
             customer_id,
             balance_cents: 13424234234,
             account_type: AccountType::Savings,
+            name: Some("abc".to_string()),
+            available_balance_cents: 34343,
+            account_number: "".to_string(),
         };
 
         let mut mock_repo = MockAccountsRepository::new();
@@ -210,7 +274,12 @@ mod tests {
         let res = create_account(
             Data::new(mock_repo),
             customer_id.into(),
-            Json(new_account.into()),
+            Json(NewAccountRest {
+                customer_id,
+                balance_cents: 13424234234,
+                account_type: AccountTypeRest::Savings,
+                name: Some("abc".to_string()),
+            }),
         )
         .await;
 
@@ -235,12 +304,30 @@ mod tests {
                         customer_id: 1,
                         balance_cents: 13424234234,
                         account_type: AccountType::Savings,
+                        date_opened: NaiveDate::from_ymd_opt(2016, 7, 8)
+                            .unwrap()
+                            .and_hms_opt(9, 10, 11)
+                            .unwrap(),
+                        account_status: AccountStatus::Active,
+                        name: Some("abc".to_string()),
+                        available_balance_cents: 34343,
+                        account_number: "012345678".to_string(),
+                        bsb: 123456,
                     },
                     Account {
                         id: 2,
                         customer_id: 1,
                         balance_cents: 13424234234,
                         account_type: AccountType::Savings,
+                        date_opened: NaiveDate::from_ymd_opt(2016, 7, 8)
+                            .unwrap()
+                            .and_hms_opt(9, 10, 11)
+                            .unwrap(),
+                        account_status: AccountStatus::Active,
+                        available_balance_cents: 34343,
+                        name: Some("abc".to_string()),
+                        account_number: "012345678".to_string(),
+                        bsb: 123456,
                     },
                 ])
             });
@@ -260,12 +347,24 @@ mod tests {
                     customer_id: 1,
                     balance_cents: 13424234234,
                     account_type: AccountTypeRest::Savings,
+                    date_opened: "2016-07-08 09:10:11".to_string(),
+                    account_status: AccountStatusRest::Active,
+                    name: Some("abc".to_string()),
+                    available_balance_cents: 34343,
+                    account_number: "012345678".to_string(),
+                    bsb: 123456,
                 },
                 AccountRest {
                     id: 2,
                     customer_id: 1,
                     balance_cents: 13424234234,
                     account_type: AccountTypeRest::Savings,
+                    date_opened: "2016-07-08 09:10:11".to_string(),
+                    account_status: AccountStatusRest::Active,
+                    name: Some("abc".to_string()),
+                    available_balance_cents: 34343,
+                    account_number: "012345678".to_string(),
+                    bsb: 123456,
                 },
             ],
         })
@@ -298,19 +397,28 @@ mod tests {
         let customer_id = 1;
         let account_id = 2;
 
-        let account = Account {
-            id: account_id,
-            customer_id,
-            balance_cents: 13424234234,
-            account_type: AccountType::Savings,
-        };
-
         let mut mock_repo = MockAccountsRepository::new();
         mock_repo
             .expect_get_account()
             .with(eq(account_id))
             .times(1)
-            .returning(move |_| Ok(account));
+            .returning(move |_| {
+                Ok(Account {
+                    id: account_id,
+                    customer_id,
+                    balance_cents: 13424234234,
+                    account_type: AccountType::Savings,
+                    date_opened: NaiveDate::from_ymd_opt(2016, 7, 8)
+                        .unwrap()
+                        .and_hms_opt(9, 10, 11)
+                        .unwrap(),
+                    account_status: AccountStatus::Active,
+                    name: Some("abc".to_string()),
+                    available_balance_cents: 34343,
+                    account_number: "012345678".to_string(),
+                    bsb: 123456,
+                })
+            });
 
         let res = get_account(Data::new(mock_repo), (customer_id, account_id).into())
             .await
@@ -320,7 +428,19 @@ mod tests {
         let actual_body = to_bytes(res.into_body()).await.unwrap();
 
         let expected_status = StatusCode::OK;
-        let expected_body = serde_json::to_string::<AccountRest>(&account.into()).unwrap();
+        let expected_body = serde_json::to_string::<AccountRest>(&AccountRest {
+            id: account_id,
+            customer_id,
+            balance_cents: 13424234234,
+            account_type: AccountTypeRest::Savings,
+            date_opened: "2016-07-08 09:10:11".to_string(),
+            account_status: AccountStatusRest::Active,
+            name: Some("abc".to_string()),
+            available_balance_cents: 34343,
+            account_number: "012345678".to_string(),
+            bsb: 123456,
+        })
+        .unwrap();
 
         assert_eq!(expected_status, actual_status);
         assert_eq!(expected_body, actual_body)
@@ -368,19 +488,28 @@ mod tests {
         let wrong_customer_id = 5;
         let account_id = 4;
 
-        let account = Account {
-            id: account_id,
-            customer_id,
-            balance_cents: 13424234234,
-            account_type: AccountType::Savings,
-        };
-
         let mut mock_repo = MockAccountsRepository::new();
         mock_repo
             .expect_get_account()
             .with(eq(account_id))
             .times(1)
-            .returning(move |_| Ok(account));
+            .returning(move |_| {
+                Ok(Account {
+                    id: account_id,
+                    customer_id,
+                    balance_cents: 13424234234,
+                    account_type: AccountType::Savings,
+                    date_opened: NaiveDate::from_ymd_opt(2016, 7, 8)
+                        .unwrap()
+                        .and_hms_opt(9, 10, 11)
+                        .unwrap(),
+                    account_status: AccountStatus::Active,
+                    name: Some("abc".to_string()),
+                    available_balance_cents: 34343,
+                    account_number: "012345678".to_string(),
+                    bsb: 123456,
+                })
+            });
 
         let res = get_account(Data::new(mock_repo), (wrong_customer_id, account_id).into()).await;
 
@@ -392,13 +521,6 @@ mod tests {
         let customer_id = 1;
         let account_id = 2;
 
-        let account = Account {
-            id: account_id,
-            customer_id,
-            balance_cents: 13424234234,
-            account_type: AccountType::Savings,
-        };
-
         let mut seq = Sequence::new();
 
         let mut mock_repo = MockAccountsRepository::new();
@@ -407,7 +529,23 @@ mod tests {
             .expect_get_account()
             .with(eq(account_id))
             .times(1)
-            .returning(move |_| Ok(account))
+            .returning(move |_| {
+                Ok(Account {
+                    id: account_id,
+                    customer_id,
+                    balance_cents: 13424234234,
+                    account_type: AccountType::Savings,
+                    date_opened: NaiveDate::from_ymd_opt(2016, 7, 8)
+                        .unwrap()
+                        .and_hms_opt(9, 10, 11)
+                        .unwrap(),
+                    account_status: AccountStatus::Active,
+                    name: Some("abc".to_string()),
+                    available_balance_cents: 34343,
+                    account_number: "012345678".to_string(),
+                    bsb: 123456,
+                })
+            })
             .in_sequence(&mut seq);
 
         mock_repo
@@ -472,19 +610,28 @@ mod tests {
         let account_id = 2;
         let wrong_customer_id = 2;
 
-        let account = Account {
-            id: account_id,
-            customer_id,
-            balance_cents: 13424234234,
-            account_type: AccountType::Savings,
-        };
-
         let mut mock_repo = MockAccountsRepository::new();
         mock_repo
             .expect_get_account()
             .with(eq(account_id))
             .times(1)
-            .returning(move |_| Ok(account));
+            .returning(move |_| {
+                Ok(Account {
+                    id: account_id,
+                    customer_id,
+                    balance_cents: 13424234234,
+                    account_type: AccountType::Savings,
+                    date_opened: NaiveDate::from_ymd_opt(2016, 7, 8)
+                        .unwrap()
+                        .and_hms_opt(9, 10, 11)
+                        .unwrap(),
+                    account_status: AccountStatus::Active,
+                    name: Some("abc".to_string()),
+                    available_balance_cents: 34343,
+                    account_number: "012345678".to_string(),
+                    bsb: 123456,
+                })
+            });
 
         let res =
             delete_account(Data::new(mock_repo), (wrong_customer_id, account_id).into()).await;
