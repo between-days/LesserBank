@@ -36,7 +36,6 @@ function AccountDetailContent(accountNumber: number) {
 
 export const getServerSideProps = async (context: { query: { slug: any; }; }) => {
     let { slug } = context.query;
-
     return { props: { slug: slug } };
 };
 

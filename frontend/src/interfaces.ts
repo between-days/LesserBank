@@ -34,7 +34,7 @@ export interface ExternalTransaction {
   toName: string | undefined
   amountCents: number
   availableBalanceCents: number
-  status: "complete" | "pending" | "error"
+  status: TransactionStatus
   date: Date
   toBusinessName: string
 }

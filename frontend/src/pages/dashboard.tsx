@@ -14,7 +14,6 @@ function DashboardContent() {
       cols={3}
       spacing="xl"
       verticalSpacing="xl"
-
       breakpoints={[
         { maxWidth: 'md', cols: 3, spacing: 'md' },
         { maxWidth: 'sm', cols: 2, spacing: 'sm' },

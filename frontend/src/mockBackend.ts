@@ -1,4 +1,3 @@
-
 import { Account, InternalTransaction } from "./interfaces"
 
 export function mockAccounts(): Account[] {
@@ -79,9 +78,7 @@ export function mockAccounts(): Account[] {
 }
 
 export function mockFindAccountByNumber(accountNumber: number): Account | undefined {
-  console.log("looking for account ", accountNumber)
   const accounts: Account[] = mockAccounts()
-
   const account = accounts.find((account) => account.accountNumber == accountNumber)
   return account
 }
