@@ -4,7 +4,7 @@ export type TransactionStatus = "complete" | "pending" | "error"
 export interface Account {
   dateOpened: Date
   status: AccountStatus
-  name: string
+  name: string | undefined
   accountType: string
   balanceCents: number
   availableBalanceCents: number
