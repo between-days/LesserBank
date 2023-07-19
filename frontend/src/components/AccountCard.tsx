@@ -2,7 +2,15 @@ import { Card, Text, Group, Stack, Flex, MantineShadow } from '@mantine/core';
 import { useHover } from '@mantine/hooks';
 import { useRouter } from 'next/router';
 import { getAccountCardImage, getAccountNumberString, getBsbString, getDollarText, getIconForAccountType } from '@/UIUtils';
-import { AccountCardProps } from '@/interfaces';
+
+export interface AccountCardProps {
+    name: string
+    accountType: string
+    balanceCents: number
+    accountNumber: number
+    bsb: number,
+    onHover: boolean
+}
 
 export default function AccountCard({ name, accountType, balanceCents, accountNumber, bsb, onHover }: AccountCardProps) {
     const router = useRouter()

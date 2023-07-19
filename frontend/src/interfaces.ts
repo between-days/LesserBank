@@ -38,12 +38,3 @@ export interface ExternalTransaction {
   date: Date
   toBusinessName: string
 }
-
-export interface AccountCardProps {
-  name: string
-  accountType: string
-  balanceCents: number
-  accountNumber: number
-  bsb: number,
-  onHover: boolean
-}
