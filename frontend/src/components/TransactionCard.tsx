@@ -22,52 +22,19 @@ export default function TransactionCard({ fromNumber, fromBsb, toNumber, toBsb, 
 
     return (
         <Card ref={ref} shadow={hovered ? "xl" : "sm"} withBorder={hovered ? false : true} radius="md" padding="md">
-            <Flex
-                mih={50}
-                gap="md"
-                justify="space-between"
-                wrap="wrap"
-            >
-                <Flex
-                    mih={50}
-                    gap="md"
-                    justify="flex-end"
-                    align="flex-start"
-                    direction="row"
-                    wrap="wrap"
-                >
-                    <Flex
-                        mih={50}
-
-                        justify="flex-start"
-                        align="flex-start"
-                        direction="column"
-                        wrap="wrap"
-                    >
+            <Flex mih={50} gap="md" justify="space-between" wrap="wrap" >
+                <Flex mih={50} gap="md" justify="flex-end" align="flex-start" direction="row" wrap="wrap" >
+                    <Flex mih={50} justify="flex-start" align="flex-start" direction="column" wrap="wrap" >
                         <Text fz="xl" weight={500}>
-                            {date.toLocaleDateString()}
+                            {date.toLocaleDateString('en-au')}
                         </Text>
                         <Text color="green"  >
                             {getDollarText(amountCents)}
                         </Text>
                     </Flex>
                 </Flex>
-                <Flex
-                    mih={50}
-                    gap="lg"
-                    justify="center"
-                    align="center"
-                    direction="column"
-                    wrap="wrap"
-                >
-                    <Flex
-                        mih={50}
-                        gap="md"
-                        justify="flex-start"
-                        align="center"
-                        direction="row"
-                        wrap="wrap"
-                    >
+                <Flex mih={50} gap="lg" justify="center" align="center" direction="column" wrap="wrap" >
+                    <Flex mih={50} gap="md" justify="flex-start" align="center" direction="row" wrap="wrap">
                         <div >
                             <Text fw={500}>{fromName}</Text>
                             <Text color="dimmed">{getAccountNumberString(fromNumber)}</Text>
