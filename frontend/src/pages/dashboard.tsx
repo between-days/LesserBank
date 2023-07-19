@@ -4,11 +4,8 @@ import CustomAppShell from '@/components/CustomAppShell';
 import { mockAccounts } from '@/mockBackend';
 
 function DashboardContent() {
-  const accounts = mockAccounts().map((account, i) => <div id={i.toString()}>
-    <div id={i.toString()}>
-      <AccountCard {...account} />
-    </div>
-
+  const accounts = mockAccounts().map((account, i) => <div key={i}>
+    <AccountCard {...account} />
   </div>
   );
 

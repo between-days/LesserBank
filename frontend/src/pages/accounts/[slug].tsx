@@ -17,12 +17,12 @@ function AccountDetailContent(accountNumber: number) {
     const transactions = mockTransactions()
 
     const transactionsContent = transactions.map((transaction, i) =>
-        <div id={i.toString()}>
+        <div key={i}>
             <TransactionCard {...transaction} />
             <Space h="md" />
         </div>)
 
-    return <Container size="xl" id={accountNumber.toString()}>
+    return <Container size="xl">
         <Card>
             <AccountCard {...account} />
             <Space h="xl" />
