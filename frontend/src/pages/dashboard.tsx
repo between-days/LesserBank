@@ -5,7 +5,7 @@ import { mockAccounts } from '@/mockBackend';
 
 function DashboardContent() {
   const accounts = mockAccounts().map((account, i) => <div key={i}>
-    <AccountCard {...account} />
+    <AccountCard {...{ ...account, onHover: true }} />
   </div>
   );
 
@@ -20,7 +20,6 @@ function DashboardContent() {
         { maxWidth: 'sm', cols: 2, spacing: 'sm' },
         { maxWidth: 'xs', cols: 1, spacing: 'sm' },
       ]}
-
     >
       {accounts}
     </SimpleGrid>

@@ -1,15 +1,22 @@
-import { Card, Text, Group, Stack, Flex } from '@mantine/core';
+import { Card, Text, Group, Stack, Flex, MantineShadow } from '@mantine/core';
 import { useHover } from '@mantine/hooks';
 import { useRouter } from 'next/router';
 import { getAccountCardImage, getAccountNumberString, getBsbString, getDollarText, getIconForAccountType } from '@/UIUtils';
 import { AccountCardProps } from '@/interfaces';
 
-export default function AccountCard({ name, accountType, balanceCents, accountNumber, bsb }: AccountCardProps) {
-    const { hovered, ref } = useHover();
+export default function AccountCard({ name, accountType, balanceCents, accountNumber, bsb, onHover }: AccountCardProps) {
     const router = useRouter()
+    const { hovered, ref } = useHover();
+
+    let shadow: MantineShadow | undefined = "sm"
+    let withBorder: boolean = false
+    if (onHover) {
+        shadow = hovered ? "xl" : "sm"
+        withBorder = hovered ? false : true
+    }
 
     return (
-        <Card ref={ref} onClick={() => { router.push(`/accounts/${accountNumber}`) }} shadow={hovered ? "xl" : "sm"} radius="md" withBorder={hovered ? false : true}>
+        <Card ref={ref} onClick={() => { router.push(`/accounts/${accountNumber}`) }} shadow={shadow} radius="md" withBorder={withBorder}>
             <Card.Section>
                 {getAccountCardImage(accountType)}
             </Card.Section>

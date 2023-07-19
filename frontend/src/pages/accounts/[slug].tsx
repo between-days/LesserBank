@@ -24,9 +24,9 @@ function AccountDetailContent(accountNumber: number) {
 
     return <Container size="xl">
         <Card>
-            <AccountCard {...account} />
+            <AccountCard {...{ ...account, onHover: false }} />
             <Space h="xl" />
-            <Title>Transfers</Title>
+            <Title>Transactions</Title>
             <Space h="xl" />
             {transactionsContent}
         </Card>
