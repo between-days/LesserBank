@@ -1,20 +1,12 @@
-import { Card, Text, Group, Stack, Flex, MantineShadow } from '@mantine/core';
+import { Card, Text, Group, Stack, Flex, MantineShadow, useMantineTheme, Tooltip, Space, Center } from '@mantine/core';
 import { useHover } from '@mantine/hooks';
 import { useRouter } from 'next/router';
-import { getAccountCardImage, getAccountNumberString, getBsbString, getDollarTextFromCents, getIconForAccountType } from '@/UIUtils';
-
-// export interface AccountCardProps {
-//     name: string | undefined
-//     accountType: string
-//     balanceCents: number
-//     accountNumber: number
-//     bsb: number,
-//     onHover: boolean
-// }
+import { getAccountNumberString, getBsbString, getDollarTextFromCents, getIconForAccountType } from '@/UIUtils';
+import { AccountType } from '@/interfaces';
 
 export interface AccountCardProps {
     name: string | undefined
-    accountType: string
+    accountType: AccountType
     balanceCents: number
     availableBalanceCents: number
     accountNumber: number
@@ -25,6 +17,7 @@ export interface AccountCardProps {
 export default function AccountCard({ name, accountType, balanceCents, accountNumber, availableBalanceCents, bsb, onHover }: AccountCardProps) {
     const router = useRouter()
     const { hovered, ref } = useHover();
+    const theme = useMantineTheme();
 
     let shadow: MantineShadow | undefined = "sm"
     let withBorder: boolean = false
@@ -33,10 +26,21 @@ export default function AccountCard({ name, accountType, balanceCents, accountNu
         withBorder = hovered ? false : true
     }
 
+    if (!name || name.length == 0) {
+        name = accountType.toUpperCase() + " ACCOUNT"
+    }
+
     return (
-        <Card ref={ref} onClick={() => { router.push(`/accounts/${accountNumber}`) }} shadow={shadow} radius="md" withBorder={withBorder}>
-            <Card.Section>
-                {getAccountCardImage(accountType)}
+        <Card ref={ref} onClick={() => { router.push(`/accounts/${accountNumber}`) }} shadow={shadow} radius="lg" withBorder={withBorder}>
+            <Card.Section >
+                <Center
+                    sx={(theme) => ({
+                        height: '1rem',
+                        backgroundImage: theme.fn.gradient({ from: 'red', to: 'orange', deg: 45 }),
+                        color: theme.white,
+                    })}
+                >
+                </Center>
             </Card.Section>
 
             <Group position="apart" mt="md" mb="xs">
@@ -45,15 +49,13 @@ export default function AccountCard({ name, accountType, balanceCents, accountNu
             </Group>
 
             <Stack spacing="xs">
-                <Text color="green" weight={500} fz="xl">
-                    Balance: {getDollarTextFromCents(balanceCents)}
+                <Text weight={500} fz="lg">
+                    {getDollarTextFromCents(balanceCents)}
                 </Text>
                 <Flex
                     mih={50}
-                    gap="xl"
                     justify="space-between"
                     align="center"
-                    direction="row"
                     wrap="wrap"
                 >
                     <Text color="dimmed">

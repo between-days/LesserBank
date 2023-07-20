@@ -5,11 +5,15 @@ import {
     Burger,
     useMantineTheme,
     Title,
+    ThemeIcon,
+    Center,
+    Text,
 
 } from '@mantine/core';
 
 import React from 'react';
 import { CustomNavbar } from './CustomNavBar';
+import { IconMathLower } from '@tabler/icons-react';
 
 interface CustomAppShellProps {
     title: string
@@ -37,17 +41,14 @@ export default function CustomAppShell({ title, children }: CustomAppShellProps)
 
             header={
                 <Header height={{ base: 50, md: 70 }} p="md">
-                    <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                        <MediaQuery largerThan="sm" styles={{ display: 'none' }}>
-                            <Burger
-                                opened={true}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: "space-between", height: '100%' }}>
+                        <Text fz="xl" fw={300} >{title}</Text>
 
-                                size="sm"
-                                color={theme.colors.gray[6]}
-                                mr="xl"
-                            />
-                        </MediaQuery>
-                        <Title>{title}</Title>
+                        <Center>
+                            <ThemeIcon radius='md' variant="outline" size="lg">
+                                <IconMathLower />
+                            </ThemeIcon>
+                        </Center>
                     </div>
                 </Header>
             }

@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { createStyles, Navbar, UnstyledButton, Tooltip, rem, Center, Stack, ThemeIcon } from '@mantine/core';
+import { createStyles, Navbar, UnstyledButton, Tooltip, rem, Center, Stack, ThemeIcon, useMantineTheme, useMantineColorScheme } from '@mantine/core';
 import {
   IconHome2,
   IconSwitchHorizontal,
   IconLogout,
   IconMathLower,
+  IconMoon,
 } from '@tabler/icons-react';
 import { useRouter } from 'next/router';
 
@@ -44,7 +45,6 @@ interface NavbarLinkProps {
 }
 
 function NavbarLink({ icon: Icon, label, active, onClick }: NavbarLinkProps) {
-
   const { classes, cx } = useStyles();
 
   return (
@@ -59,6 +59,13 @@ function NavbarLink({ icon: Icon, label, active, onClick }: NavbarLinkProps) {
 export function CustomNavbar() {
   const router = useRouter()
   const [active, setActive] = useState(0);
+  const [darkMode, setDarkMode] = useState(false)
+  // TODO: const { toggleColorScheme } = useMantineColorScheme();
+
+  const handleDarkMode = () => {
+    setDarkMode(!darkMode)
+    // toggleColorScheme()
+  }
 
   const links = mockdata.map((link, index) => (
     <NavbarLink
@@ -70,19 +77,14 @@ export function CustomNavbar() {
   ));
 
   return <Navbar width={{ base: 80 }} p="md">
-    <Center>
-      <ThemeIcon>
-        <IconMathLower />
-      </ThemeIcon>
-
-    </Center>
-    <Navbar.Section grow mt={50}>
+    <Navbar.Section grow>
       <Stack justify="center" spacing={0}>
         {links}
       </Stack>
     </Navbar.Section>
     <Navbar.Section>
       <Stack justify="center" spacing={0}>
+        <NavbarLink icon={IconMoon} label="Dark mode" onClick={handleDarkMode} active={darkMode} />
         <NavbarLink icon={IconSwitchHorizontal} label="Change account" />
         <NavbarLink icon={IconLogout} label="Logout" />
       </Stack>

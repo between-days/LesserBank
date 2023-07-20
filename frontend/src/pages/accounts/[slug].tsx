@@ -1,5 +1,6 @@
 import AccountCard from "@/components/AccountCard";
 import CustomAppShell from "@/components/CustomAppShell";
+import NotFoundContent from "@/components/NotFoundContent";
 import TransactionCard from "@/components/TransactionCard";
 import { Account } from "@/interfaces";
 import { mockTransactions } from "@/mockBackend";
@@ -25,7 +26,8 @@ function AccountDetailContent(accountNumber: number) {
     }, [])
 
     if (isLoading) return <p>Loading...</p>
-    if (!account) return <p>error getting account</p>
+
+    if (!account) return <NotFoundContent />
 
     const transactions = mockTransactions()
 
@@ -35,15 +37,14 @@ function AccountDetailContent(accountNumber: number) {
             <Space h="md" />
         </div>)
 
-    return <Container size="xl">
+    return <Container size="sm">
         <Card>
             <AccountCard {...{ ...account, onHover: false }} />
             <Space h="xl" />
-            <Title>Transactions</Title>
+            <Title order={2}>Transactions</Title>
             <Space h="xl" />
             {transactionsContent}
         </Card>
-
     </Container>
 }
 
@@ -61,8 +62,10 @@ export default function AccountDetail(props: { slug: any; }) {
 
     const accountDetailContent = AccountDetailContent(accountNumber)
 
+    const title = accountNumber ? `Account ${accountNumber}` : "Error"
+
     return (
-        <CustomAppShell {...{ title: `Account ${accountNumber}` }}>
+        <CustomAppShell {...{ title }}>
             {accountDetailContent}
         </CustomAppShell>
     )

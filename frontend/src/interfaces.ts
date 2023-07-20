@@ -1,11 +1,12 @@
 export type AccountStatus = "active" | "inactive"
 export type TransactionStatus = "complete" | "pending" | "error"
+export type AccountType = "savings" | "termDeposit" | "transaction"
 
 export interface Account {
   dateOpened: Date
   status: AccountStatus
   name: string | undefined
-  accountType: string
+  accountType: AccountType
   balanceCents: number
   availableBalanceCents: number
   accountNumber: number
