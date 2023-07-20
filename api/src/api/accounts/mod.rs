@@ -14,7 +14,7 @@ pub fn configure_accounts_api<T: AccountsRepository>(cfg: &mut web::ServiceConfi
             .service(
                 web::resource("")
                     .route(web::post().to(accounts::handlers::create_account::<T>))
-                    .route(web::get().to(accounts::handlers::get_accounts_for_customer::<T>)),
+                    .route(web::get().to(accounts::handlers::find_accounts::<T>)),
             )
             .service(
                 web::resource("/{account_id}")

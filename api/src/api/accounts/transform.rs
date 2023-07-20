@@ -1,7 +1,8 @@
-use crate::models::{Account, AccountStatus, AccountType, NewAccount};
+use crate::models::{Account, AccountStatus, AccountType, FindAccountQuery, NewAccount};
 
 use super::models::{
-    AccountRest, AccountStatusRest, AccountTypeRest, AccountsRest, NewAccountRest,
+    AccountRest, AccountStatusRest, AccountTypeRest, AccountsRest, FindAccountQueryRest,
+    NewAccountRest,
 };
 
 impl From<AccountType> for AccountTypeRest {

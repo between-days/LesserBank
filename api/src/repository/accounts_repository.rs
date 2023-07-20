@@ -5,7 +5,7 @@ use diesel::{
 
 use crate::{
     error::RepoError,
-    models::{Account, NewAccount},
+    models::{Account, FindAccountQuery, NewAccount},
     schema::{self, accounts},
     traits::AccountsRepository,
 };
@@ -35,14 +35,24 @@ impl AccountsRepository for AccountsRepoImpl {
             .map_err(|_| RepoError::Other)?)
     }
 
-    fn get_accounts_by_customer(&self, customer_id: i32) -> Result<Vec<Account>, RepoError> {
+    fn find_accounts(&self, account_query: FindAccountQuery) -> Result<Vec<Account>, RepoError> {
         let mut conn = self.pool.get().map_err(|_| {
             println!("couldn't get db connection from pool");
             RepoError::ConnectionError
         })?;
 
-        Ok(accounts::table
-            .filter(schema::accounts::customer_id.eq(customer_id))
+        let mut query = schema::accounts::table.into_boxed();
+        if let Some(id) = account_query.account_id {
+            query = query.filter(accounts::id.eq(id));
+        }
+
+        query = query.filter(accounts::customer_id.eq(account_query.customer_id));
+
+        if let Some(account_number) = account_query.account_number {
+            query = query.filter(accounts::account_number.eq(account_number))
+        }
+
+        Ok(query
             .limit(50)
             .select(Account::as_select())
             .load(&mut conn)

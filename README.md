@@ -24,7 +24,7 @@ Postgres with diesel orm
 balance int for now <https://stackoverflow.com/questions/71815897/rust-correct-use-of-decimal-type-in-diesel>
 
 #### Migrations
-Diesel cli. A little touch and go. Storing balance in cents mig is breaking (changing balance_cents back to balance -> null balance). In practice would need to need to be setting balance (backwards compat code) or a more complex migration to move values back to balance. 
+Diesel cli. A little touch and go. Storing balance in cents mig is breaking (changing balance_cents back to balance -> null balance). In practice would need to need to be setting balance (backwards compat code) or a more complex migration to move values back to balance. Will refactor migrations after base functionality done
 
 ## Testing
 Using mockall for mocks

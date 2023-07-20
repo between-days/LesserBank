@@ -2,17 +2,30 @@ import AccountCard from "@/components/AccountCard";
 import CustomAppShell from "@/components/CustomAppShell";
 import TransactionCard from "@/components/TransactionCard";
 import { Account } from "@/interfaces";
-import { mockFindAccountByNumber, mockTransactions } from "@/mockBackend";
+import { mockTransactions } from "@/mockBackend";
 import { Card, Container, Space, Title } from "@mantine/core";
+import React, { useState, useEffect } from 'react';
 
 function AccountDetailContent(accountNumber: number) {
-    const account: Account | undefined = mockFindAccountByNumber(accountNumber)
+    const [account, setAccount] = useState<Account | null>(null)
+    const [isLoading, setLoading] = useState(false)
 
-    if (!account) {
-        return <>
-            Not Found
-        </>
-    }
+    // TODO: /api prepend for all api routes
+    useEffect(() => {
+        setLoading(true)
+        fetch(`http://localhost:8080/customers/1/accounts?accountNumber=${accountNumber}`)
+            .then((res) => res.json())
+            .then((data) => {
+                console.log("DATA GOT")
+                console.log(data)
+                const account = data.accounts[0];
+                setAccount(account)
+                setLoading(false)
+            })
+    }, [])
+
+    if (isLoading) return <p>Loading...</p>
+    if (!account) return <p>error getting account</p>
 
     const transactions = mockTransactions()
 

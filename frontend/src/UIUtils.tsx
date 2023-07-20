@@ -27,7 +27,7 @@ export function getIconForAccountType(accountType: string) {
     }
 }
 
-export function getDollarText(balanceCents: number) {
+export function getDollarTextFromCents(balanceCents: number) {
     const balanceDollars = balanceCents / 100
     return `$${balanceDollars.toLocaleString()}`
 }

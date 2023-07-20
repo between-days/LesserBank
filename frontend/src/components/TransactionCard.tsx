@@ -1,4 +1,4 @@
-import { getAccountNumberString, getDollarText } from "@/UIUtils";
+import { getAccountNumberString, getDollarTextFromCents } from "@/UIUtils";
 import { TransactionStatus } from "@/interfaces";
 import { Card, Flex, Text, ThemeIcon } from "@mantine/core";
 import { useHover } from "@mantine/hooks";
@@ -29,7 +29,7 @@ export default function TransactionCard({ fromNumber, fromBsb, toNumber, toBsb, 
                             {date.toLocaleDateString('en-au')}
                         </Text>
                         <Text color="green"  >
-                            {getDollarText(amountCents)}
+                            {getDollarTextFromCents(amountCents)}
                         </Text>
                     </Flex>
                 </Flex>
@@ -49,7 +49,7 @@ export default function TransactionCard({ fromNumber, fromBsb, toNumber, toBsb, 
                             <Text color="dimmed">{getAccountNumberString(toNumber)}</Text>
                         </div>
                     </Flex>
-                    <Text fz="lg" fw={500} >Available: {getDollarText(availableBalanceCents)}</Text>
+                    <Text fz="lg" fw={500} >Available: {getDollarTextFromCents(availableBalanceCents)}</Text>
                 </Flex>
             </Flex>
         </Card>

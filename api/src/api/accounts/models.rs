@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Copy, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub enum AccountTypeRest {
     Savings,
     Transaction,
@@ -8,13 +9,15 @@ pub enum AccountTypeRest {
 }
 
 #[derive(Deserialize, Serialize, Copy, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub enum AccountStatusRest {
     Active,
     Inactive,
 }
 
-#[cfg_attr(test, derive(Deserialize))]
+#[cfg_attr(test, derive(Deserialize, PartialEq, Debug))]
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AccountRest {
     pub id: i32,
     pub customer_id: i32,
@@ -30,6 +33,7 @@ pub struct AccountRest {
 
 #[cfg_attr(test, derive(Serialize))]
 #[derive(Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct NewAccountRest {
     pub customer_id: i32,
     pub balance_cents: i64,
@@ -37,7 +41,17 @@ pub struct NewAccountRest {
     pub name: Option<String>,
 }
 
+#[cfg_attr(test, derive(Deserialize))]
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AccountsRest {
     pub accounts: Vec<AccountRest>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FindAccountQueryRest {
+    pub account_id: Option<i32>,
+    pub customer_id: Option<i32>,
+    pub account_number: Option<String>,
 }

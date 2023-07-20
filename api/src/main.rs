@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::{dev::Server, get, web::Data, App, HttpResponse, HttpServer, Responder};
 use api::accounts::configure_accounts_api;
 use repository::accounts_repository::AccountsRepoImpl;
@@ -23,6 +24,7 @@ pub fn create_server() -> Result<Server, std::io::Error> {
 
     let s = HttpServer::new(move || {
         App::new()
+            .wrap(Cors::permissive())
             .app_data(accounts_repo_data.clone())
             .configure(configure_accounts_api::<AccountsRepoImpl>)
             .service(hello)

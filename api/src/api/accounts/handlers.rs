@@ -1,13 +1,13 @@
 use actix_web::http::header::ContentType;
-use actix_web::web::{Data, Path};
+use actix_web::web::{Data, Path, Query};
 use actix_web::{web, HttpResponse};
 
 use super::error::AccountsApiError;
-use super::models::{AccountRest, AccountsRest, NewAccountRest};
+use super::models::{AccountRest, AccountsRest, FindAccountQueryRest, NewAccountRest};
 
 use crate::api::accounts::util::get_random_account_number;
 use crate::error::RepoError;
-use crate::models::NewAccount;
+use crate::models::{FindAccountQuery, NewAccount};
 use crate::traits::AccountsRepository;
 
 pub async fn create_account<T: AccountsRepository>(
@@ -42,18 +42,38 @@ pub async fn create_account<T: AccountsRepository>(
         .json(web::Json::<AccountRest>(account.into())))
 }
 
-pub async fn get_accounts_for_customer<T: AccountsRepository>(
+pub async fn find_accounts<T: AccountsRepository>(
     accounts_repo: Data<T>,
     path: Path<i32>,
+    query: Query<FindAccountQueryRest>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let customer_id = path.into_inner();
 
+    let query = FindAccountQuery {
+        account_id: query.account_id,
+        customer_id,
+        account_number: query.account_number.clone(),
+    };
+
+    if query.customer_id != customer_id {
+        return Err(AccountsApiError::Unauthorized.into());
+    }
+
     println!("Trying to get accounts for customer {}", customer_id);
 
-    let accounts = web::block(move || accounts_repo.get_accounts_by_customer(customer_id))
+    let accounts = web::block(move || accounts_repo.find_accounts(query))
         .await
         .map_err(|_| AccountsApiError::InternalError)?
         .map_err(|_| AccountsApiError::InternalError)?;
+
+    // enforced query on customer_id so should always be fine, but safe > sorry
+    for acc in accounts.iter() {
+        if acc.customer_id != customer_id {
+            return Err(AccountsApiError::BadRequest.into());
+        }
+    }
+
+    println!("Got accounts for customer {}", customer_id);
 
     Ok(HttpResponse::Ok()
         .insert_header(ContentType::json())
@@ -137,13 +157,13 @@ mod tests {
     use crate::{
         api::accounts::{
             error::AccountsApiError,
-            handlers::{create_account, delete_account, get_account, get_accounts_for_customer},
+            handlers::{create_account, delete_account, find_accounts, get_account},
             models::{
                 AccountRest, AccountStatusRest, AccountTypeRest, AccountsRest, NewAccountRest,
             },
         },
         error::RepoError,
-        models::{Account, AccountStatus, AccountType, NewAccount},
+        models::{Account, AccountStatus, AccountType, FindAccountQuery, NewAccount},
         traits::MockAccountsRepository,
     };
 
@@ -289,13 +309,19 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_get_accounts_success() {
+    async fn test_find_accounts_by_customer_id_success() {
         let customer_id = 1;
+
+        let expected_query = FindAccountQuery {
+            account_id: None,
+            customer_id,
+            account_number: None,
+        };
 
         let mut mock_repo = MockAccountsRepository::new();
         mock_repo
-            .expect_get_accounts_by_customer()
-            .with(eq(customer_id))
+            .expect_find_accounts()
+            .with(eq(expected_query))
             .times(1)
             .returning(move |_| {
                 Ok(vec![
@@ -332,15 +358,24 @@ mod tests {
                 ])
             });
 
-        let res = get_accounts_for_customer(Data::new(mock_repo), customer_id.into())
-            .await
-            .unwrap();
+        let mut app = test::init_service(
+            App::new().app_data(Data::new(mock_repo)).service(
+                web::resource("/customers/{customer_id}/accounts")
+                    .route(web::get().to(find_accounts::<MockAccountsRepository>)),
+            ),
+        )
+        .await;
 
-        let actual_status = res.status();
-        let actual_body = to_bytes(res.into_body()).await.unwrap();
+        let resp = test::TestRequest::get()
+            .uri(format!("/customers/{0}/accounts?customerId={0}", customer_id).as_str())
+            .append_header(("Content-Type", "application/json"))
+            .send_request(&mut app)
+            .await;
 
-        let expected_status = StatusCode::OK;
-        let expected_body = serde_json::to_string(&AccountsRest {
+        let actual_status = resp.status();
+        assert_eq!(StatusCode::OK, actual_status);
+
+        let expected_res = AccountsRest {
             accounts: vec![
                 AccountRest {
                     id: 1,
@@ -367,29 +402,46 @@ mod tests {
                     bsb: 123456,
                 },
             ],
-        })
-        .unwrap();
+        };
 
-        assert_eq!(expected_status, actual_status);
-        assert_eq!(expected_body, actual_body)
+        let actual_res: AccountsRest = test::read_body_json(resp).await;
+        assert_eq!(expected_res.accounts[0], actual_res.accounts[0]);
+        assert_eq!(expected_res.accounts[1], actual_res.accounts[1]);
     }
 
     #[actix_web::test]
-    async fn test_get_accounts_internal_error() {
-        let customer_id = 1;
+    async fn test_find_accounts_internal_error() {
+        let customer_id = 2;
+
+        let expected_query = FindAccountQuery {
+            account_id: None,
+            customer_id,
+            account_number: None,
+        };
 
         let mut mock_repo = MockAccountsRepository::new();
         mock_repo
-            .expect_get_accounts_by_customer()
-            .with(eq(customer_id))
+            .expect_find_accounts()
+            .with(eq(expected_query))
             .times(1)
             .returning(move |_| Err(RepoError::Other));
 
-        let res = get_accounts_for_customer(Data::new(mock_repo), customer_id.into()).await;
+        let mut app = test::init_service(
+            App::new().app_data(Data::new(mock_repo)).service(
+                web::resource("/customers/{customer_id}/accounts")
+                    .route(web::get().to(find_accounts::<MockAccountsRepository>)),
+            ),
+        )
+        .await;
 
-        assert!(
-            res.is_err_and(|e| { e.to_string() == AccountsApiError::InternalError.to_string() })
-        );
+        let resp = test::TestRequest::get()
+            .uri(format!("/customers/{0}/accounts?customerId={0}", customer_id).as_str())
+            .append_header(("Content-Type", "application/json"))
+            .send_request(&mut app)
+            .await;
+
+        let actual_status = resp.status();
+        assert_eq!(StatusCode::INTERNAL_SERVER_ERROR, actual_status);
     }
 
     #[actix_web::test]

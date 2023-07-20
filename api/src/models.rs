@@ -44,3 +44,10 @@ pub struct NewAccount {
     pub available_balance_cents: i64,
     pub account_number: String,
 }
+
+#[cfg_attr(test, derive(Debug, PartialEq))]
+pub struct FindAccountQuery {
+    pub account_id: Option<i32>,
+    pub customer_id: i32,
+    pub account_number: Option<String>,
+}

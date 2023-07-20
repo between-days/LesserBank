@@ -11,6 +11,7 @@ pub enum AccountsApiError {
     NotFound,
     InternalError,
     Unauthorized,
+    BadRequest,
 }
 
 impl fmt::Display for AccountsApiError {
@@ -27,6 +28,7 @@ impl error::ResponseError for AccountsApiError {
                 Self::NotFound => "Entity not found",
                 Self::InternalError => "Internal server error",
                 Self::Unauthorized => "Unauthorized",
+                Self::BadRequest => "Bad Request",
             })
     }
 
@@ -35,6 +37,7 @@ impl error::ResponseError for AccountsApiError {
             AccountsApiError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             AccountsApiError::NotFound => StatusCode::NOT_FOUND,
             AccountsApiError::Unauthorized => StatusCode::UNAUTHORIZED,
+            AccountsApiError::BadRequest => StatusCode::BAD_REQUEST,
         }
     }
 }

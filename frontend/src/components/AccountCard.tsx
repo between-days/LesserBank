@@ -1,18 +1,28 @@
 import { Card, Text, Group, Stack, Flex, MantineShadow } from '@mantine/core';
 import { useHover } from '@mantine/hooks';
 import { useRouter } from 'next/router';
-import { getAccountCardImage, getAccountNumberString, getBsbString, getDollarText, getIconForAccountType } from '@/UIUtils';
+import { getAccountCardImage, getAccountNumberString, getBsbString, getDollarTextFromCents, getIconForAccountType } from '@/UIUtils';
+
+// export interface AccountCardProps {
+//     name: string | undefined
+//     accountType: string
+//     balanceCents: number
+//     accountNumber: number
+//     bsb: number,
+//     onHover: boolean
+// }
 
 export interface AccountCardProps {
-    name: string
+    name: string | undefined
     accountType: string
     balanceCents: number
+    availableBalanceCents: number
     accountNumber: number
     bsb: number,
     onHover: boolean
 }
 
-export default function AccountCard({ name, accountType, balanceCents, accountNumber, bsb, onHover }: AccountCardProps) {
+export default function AccountCard({ name, accountType, balanceCents, accountNumber, availableBalanceCents, bsb, onHover }: AccountCardProps) {
     const router = useRouter()
     const { hovered, ref } = useHover();
 
@@ -36,7 +46,7 @@ export default function AccountCard({ name, accountType, balanceCents, accountNu
 
             <Stack spacing="xs">
                 <Text color="green" weight={500} fz="xl">
-                    Balance: {getDollarText(balanceCents)}
+                    Balance: {getDollarTextFromCents(balanceCents)}
                 </Text>
                 <Flex
                     mih={50}
