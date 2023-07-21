@@ -3,7 +3,7 @@ export type TransactionStatus = "complete" | "pending" | "error"
 export type AccountType = "savings" | "termDeposit" | "transaction"
 
 export interface Account {
-  dateOpened: Date
+  dateOpened: string
   status: AccountStatus
   name: string | undefined
   accountType: AccountType
@@ -11,6 +11,10 @@ export interface Account {
   availableBalanceCents: number
   accountNumber: number
   bsb: number
+}
+
+export interface Accounts {
+  accounts: Account[]
 }
 
 export interface InternalTransaction {

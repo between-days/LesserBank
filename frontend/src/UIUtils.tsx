@@ -1,7 +1,41 @@
 import { ThemeIcon, Tooltip, Image } from "@mantine/core"
-import { ACCOUNT_ICON_SIZE } from "./UIConstants"
-import { IconArrowsUp, IconCloudDollar, IconTimeDuration0 } from "@tabler/icons-react"
-import { AccountType } from "./interfaces"
+import { ACCOUNT_ICON_SIZE, TRANSACTION_ICON_STATUS_SIZE } from "./UIConstants"
+import { IconArrowsUp, IconCircleCheck, IconCloudDollar, IconExclamationCircle, IconReload, IconTimeDuration0 } from "@tabler/icons-react"
+import { AccountType, TransactionStatus } from "./interfaces"
+
+export const getPrettyDate = (date: string) => new Date(date).toLocaleDateString()
+
+export const getPrettyDateTime = (date: string) => new Date(date).toLocaleTimeString()
+
+export const getIconForTransactionStatus = (transactionStatus: TransactionStatus) => {
+    switch (transactionStatus) {
+        case "complete":
+            return <Tooltip label="complete" position="right" transitionProps={{ duration: 0 }}>
+                <ThemeIcon size={TRANSACTION_ICON_STATUS_SIZE} variant="light" radius="md">
+                    <IconCircleCheck />
+                </ThemeIcon>
+
+            </Tooltip>
+        case "pending":
+            return <Tooltip label="pending" position="right" transitionProps={{ duration: 0 }}>
+                <ThemeIcon size={TRANSACTION_ICON_STATUS_SIZE} variant="light" radius="md">
+                    <IconReload />
+                </ThemeIcon>
+
+            </Tooltip>
+        default:
+            return <Tooltip label={"error"} position="right" transitionProps={{ duration: 0 }}>
+                <ThemeIcon size={TRANSACTION_ICON_STATUS_SIZE} variant="outline" radius="md">
+                    <IconExclamationCircle />
+                </ThemeIcon>
+            </Tooltip>
+    }
+}
+
+
+
+
+
 
 export function getIconForAccountType(accountType: AccountType) {
     switch (accountType) {

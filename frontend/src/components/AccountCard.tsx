@@ -35,7 +35,7 @@ export default function AccountCard({ name, accountType, balanceCents, accountNu
             <Card.Section >
                 <Center
                     sx={(theme) => ({
-                        height: '1rem',
+                        height: '0.5rem',
                         backgroundImage: theme.fn.gradient({ from: 'red', to: 'orange', deg: 45 }),
                         color: theme.white,
                     })}
@@ -50,7 +50,7 @@ export default function AccountCard({ name, accountType, balanceCents, accountNu
 
             <Stack spacing="xs">
                 <Text weight={500} fz="lg">
-                    {getDollarTextFromCents(balanceCents)}
+                    {getDollarTextFromCents(availableBalanceCents)}
                 </Text>
                 <Flex
                     mih={50}

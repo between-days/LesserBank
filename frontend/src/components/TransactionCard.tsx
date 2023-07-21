@@ -1,9 +1,10 @@
-import { TRANSACTION_ICON_SIZE } from "@/UIConstants";
-import { getAccountNumberString, getDollarTextFromCents } from "@/UIUtils";
+
+import { TRANSACTION_ICON_TO_FROM_SIZE } from "@/UIConstants";
+import { getAccountNumberString, getDollarTextFromCents, getIconForTransactionStatus } from "@/UIUtils";
 import { TransactionStatus } from "@/interfaces";
-import { Card, Flex, Text, ThemeIcon, useMantineTheme } from "@mantine/core";
+import { Card, Flex, Group, Paper, Stack, Text, ThemeIcon, useMantineTheme } from "@mantine/core";
 import { useHover } from "@mantine/hooks";
-import { IconArrowBadgeRight, IconArrowBigRight, IconArrowBigRightLines, } from "@tabler/icons-react";
+import { IconArrowBadgeRight } from "@tabler/icons-react";
 
 interface TransactionCardProps {
     fromNumber: number
@@ -23,10 +24,10 @@ export default function TransactionCard({ fromNumber, fromBsb, toNumber, toBsb, 
     const theme = useMantineTheme();
 
     return (
-        <Card ref={ref} shadow={hovered ? "xl" : "sm"} radius="md" padding="md">
-            <Flex justify="space-between" wrap="wrap" align="center" >
+        <Paper ref={ref} shadow={hovered ? "xl" : "sm"} radius="lg" pl="xl" pr="xl" p="xs">
+            <Group position="apart">
                 <Flex mih={50} align="flex-start" direction="column" wrap="wrap" >
-                    <Text fz="md" color={theme.primaryColor}>
+                    <Text fz="lg" fw={500}>
                         {getDollarTextFromCents(amountCents)}
                     </Text>
                     <Text fz="md" color="dimmed">
@@ -34,13 +35,13 @@ export default function TransactionCard({ fromNumber, fromBsb, toNumber, toBsb, 
                     </Text>
 
                 </Flex>
-                <Flex mih={50} gap="md" justify="flex-start" align="center" direction="row" wrap="wrap">
+                <Flex mih={50} gap="xl" justify="flex-start" align="center" direction="row" wrap="wrap">
                     <div >
                         <Text fz="sm" fw={500}>{fromName}</Text>
                         <Text fz="xs" color="dimmed">{getAccountNumberString(fromNumber)}</Text>
                     </div>
 
-                    <ThemeIcon size={TRANSACTION_ICON_SIZE} variant="light" radius="md">
+                    <ThemeIcon size={TRANSACTION_ICON_TO_FROM_SIZE} variant="light" radius="md">
                         <IconArrowBadgeRight />
                     </ThemeIcon>
 
@@ -49,10 +50,15 @@ export default function TransactionCard({ fromNumber, fromBsb, toNumber, toBsb, 
                         <Text fz="xs" color="dimmed">{getAccountNumberString(toNumber)}</Text>
                     </div>
                 </Flex>
-                <Text fz="md" fw={350}> Available: {getDollarTextFromCents(availableBalanceCents)}</Text>
-            </Flex>
-        </Card>
+
+                <Group>
+                    {getIconForTransactionStatus(status)}
+                    <Stack spacing={0}>
+                        <Text fz="md" fw={500}>{getDollarTextFromCents(availableBalanceCents)}</Text>
+                        <Text fz="sm" color="dimmed">Available</Text>
+                    </Stack>
+                </Group>
+            </Group>
+        </Paper>
     );
 }
-
-// TODO: status pending light, complete filled, error red - might need a new color set for reds

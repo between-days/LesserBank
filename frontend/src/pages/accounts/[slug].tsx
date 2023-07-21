@@ -1,33 +1,22 @@
 import AccountCard from "@/components/AccountCard";
-import CustomAppShell from "@/components/CustomAppShell";
-import NotFoundContent from "@/components/NotFoundContent";
+import CustomPage from "@/components/shared/CustomPage";
+import { InternalErrorContent } from "@/components/shared/error/InternalErrorContent";
 import TransactionCard from "@/components/TransactionCard";
-import { Account } from "@/interfaces";
 import { mockTransactions } from "@/mockBackend";
-import { Card, Container, Space, Title } from "@mantine/core";
-import React, { useState, useEffect } from 'react';
+import { useAccounts } from "@/services/AccountsService";
+import { getAccountNumberString, getBsbString, getDollarTextFromCents, getIconForAccountType, getPrettyDate, getPrettyDateTime } from "@/UIUtils";
+import { Grid, Group, Paper, Space, Stack, Text, ThemeIcon, Title, Tooltip, useMantineTheme } from "@mantine/core";
+import { IconCalendar } from "@tabler/icons-react";
+import React from 'react';
 
 function AccountDetailContent(accountNumber: number) {
-    const [account, setAccount] = useState<Account | null>(null)
-    const [isLoading, setLoading] = useState(false)
+    const theme = useMantineTheme();
+    const { data, error } = useAccounts({ accountNumber })
 
-    // TODO: /api prepend for all api routes
-    useEffect(() => {
-        setLoading(true)
-        fetch(`http://localhost:8080/customers/1/accounts?accountNumber=${accountNumber}`)
-            .then((res) => res.json())
-            .then((data) => {
-                console.log("DATA GOT")
-                console.log(data)
-                const account = data.accounts[0];
-                setAccount(account)
-                setLoading(false)
-            })
-    }, [])
+    if (error) return <InternalErrorContent />
+    if (!data) return <>Loading</>
 
-    if (isLoading) return <p>Loading...</p>
-
-    if (!account) return <NotFoundContent />
+    let account = data.accounts[0]
 
     const transactions = mockTransactions()
 
@@ -37,15 +26,94 @@ function AccountDetailContent(accountNumber: number) {
             <Space h="md" />
         </div>)
 
-    return <Container size="sm">
-        <Card>
-            <AccountCard {...{ ...account, onHover: false }} />
-            <Space h="xl" />
-            <Title order={2}>Transactions</Title>
-            <Space h="xl" />
-            {transactionsContent}
-        </Card>
-    </Container>
+    return <Grid>
+        <Grid.Col xs={12} mb="md">
+            <Group>
+                <Title order={2}>Account Details for</Title>
+                <Title order={2} color={theme.primaryColor} italic>
+                    {account.name ? account.name : accountNumber}
+                </Title>
+            </Group>
+
+        </Grid.Col>
+        <Grid.Col xs={4}>
+            <AccountCard {...{ ...data.accounts[0], onHover: false }} />
+        </Grid.Col>
+        <Grid.Col xs={4}>
+            <Paper withBorder shadow="sm" radius="lg" p="md" key={"aaaaa"} h="11rem">
+                <Stack>
+                    <Stack spacing={0}>
+                        <Text size="lg" weight={500}>
+                            {getDollarTextFromCents(account.availableBalanceCents)}
+                        </Text>
+                        <Text size="md" color="dimmed">
+                            Available Balance
+                        </Text>
+                    </Stack>
+                    <Stack spacing={0}>
+                        <Text size="lg" weight={500}>
+                            {getDollarTextFromCents(account.balanceCents)}
+                        </Text>
+                        <Text size="md" color="dimmed">
+                            Balance
+                        </Text>
+                    </Stack>
+                </Stack>
+            </Paper>
+        </Grid.Col>
+        <Grid.Col xs={4}>
+            <Stack align="stretch" justify="center">
+                <Paper withBorder shadow="sm" radius="lg" p="md" key={"aaaaa"}>
+                    <Group>
+                        {getIconForAccountType(account.accountType)}
+                        <Stack spacing={0}>
+                            <Text size="md" weight={500}>
+                                {getAccountNumberString(account.accountNumber)}
+                            </Text>
+                            <Text size="xs" color="dimmed">
+                                {getBsbString(account.bsb)}
+                            </Text>
+                        </Stack>
+                    </Group>
+                </Paper>
+                <Paper withBorder shadow="sm" radius="lg" p="md" key={"aaaaa"} h="5rem">
+                    <Group>
+                        <Tooltip label={getPrettyDateTime(account.dateOpened)}>
+                            <ThemeIcon size="xl" variant="light" radius="md">
+                                <IconCalendar />
+                            </ThemeIcon>
+                        </Tooltip>
+                        <Stack spacing={0}>
+                            <Text fz="md" fw={500}>
+                                {getPrettyDate(account.dateOpened)}
+                            </Text>
+                            <Text color="dimmed" fz="xs">
+                                Opened
+                            </Text>
+                        </Stack>
+                    </Group>
+                </Paper>
+            </Stack>
+        </Grid.Col>
+        <Grid.Col xs={12} >
+            <div>
+                <Title order={2}>Transactions</Title>
+                <Space mb="md" />
+                {transactionsContent}
+            </div>
+
+        </Grid.Col>
+
+    </Grid>
+
+
+
+
+
+
+
+
+
 }
 
 export const getServerSideProps = async (context: { query: { slug: any; }; }) => {
@@ -65,8 +133,8 @@ export default function AccountDetail(props: { slug: any; }) {
     const title = accountNumber ? `Account ${accountNumber}` : "Error"
 
     return (
-        <CustomAppShell {...{ title }}>
+        <CustomPage title={title}>
             {accountDetailContent}
-        </CustomAppShell>
+        </CustomPage>
     )
 }

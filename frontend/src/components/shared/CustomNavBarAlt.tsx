@@ -56,7 +56,7 @@ function NavbarLink({ icon: Icon, label, active, onClick }: NavbarLinkProps) {
   );
 }
 
-export function CustomNavbar() {
+export function CustomNavbarAlt() {
   const router = useRouter()
   const [active, setActive] = useState(0);
   const [darkMode, setDarkMode] = useState(false)
@@ -78,7 +78,7 @@ export function CustomNavbar() {
 
   return <Navbar width={{ base: 80 }} p="md">
     <Navbar.Section grow>
-      <Stack justify="center" spacing={0}>
+      <Stack justify="center">
         {links}
       </Stack>
     </Navbar.Section>
