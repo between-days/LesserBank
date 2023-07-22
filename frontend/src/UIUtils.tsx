@@ -32,11 +32,6 @@ export const getIconForTransactionStatus = (transactionStatus: TransactionStatus
     }
 }
 
-
-
-
-
-
 export function getIconForAccountType(accountType: AccountType) {
     switch (accountType) {
         case "savings":

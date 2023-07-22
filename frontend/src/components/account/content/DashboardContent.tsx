@@ -1,5 +1,5 @@
 import { Grid } from "@mantine/core";
-import AccountCard from "@/components/AccountCard";
+import AccountCard from "@/components/account/AccountCard";
 import { InternalErrorContent } from "@/components/shared/error/InternalErrorContent";
 import { useAccounts } from "@/services/AccountsService";
 

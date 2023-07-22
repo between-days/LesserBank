@@ -20,7 +20,6 @@ interface TransactionCardProps {
 
 export default function TransactionItem({ fromNumber, fromBsb, toNumber, toBsb, fromName, toName, amountCents, availableBalanceCents, status, date, }: TransactionCardProps) {
     const { hovered, ref } = useHover();
-    const theme = useMantineTheme();
 
     return (
         <Paper ref={ref} shadow={hovered ? "xl" : "sm"} radius="lg" pl="xl" pr="xl" p="xs">

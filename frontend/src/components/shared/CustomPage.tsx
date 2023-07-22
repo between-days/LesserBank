@@ -1,5 +1,5 @@
 import { Container, Flex, Space, useMantineTheme } from "@mantine/core"
-import { CustomNavBarAlt2 } from "./CustomNavBarAlt2"
+import { CustomNavBar } from "./CustomNavBar"
 
 interface CustomPageProps {
     title: any
@@ -10,10 +10,10 @@ export default function CustomPage({ title, children }: CustomPageProps) {
     const theme = useMantineTheme()
     return (
         <Flex bg={theme.colors.gray[1]} >
-            <CustomNavBarAlt2 />
+            <CustomNavBar />
             <Container mt="5rem" size="lg">
                 {title}
-                <Space h="xl"/>
+                <Space h="xl" />
                 {children}
             </Container>
         </Flex>

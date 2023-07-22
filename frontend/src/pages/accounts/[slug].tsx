@@ -1,4 +1,4 @@
-import TransactionItem from "@/components/TransactionItem";
+import TransactionItem from "@/components/transaction/TransactionItem";
 import { mockTransactions } from "@/mockBackend";
 import { Space, } from "@mantine/core";
 import React from 'react';
