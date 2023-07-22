@@ -10,7 +10,7 @@ use crate::{api::accounts, traits::AccountsRepository};
 
 pub fn configure_accounts_api<T: AccountsRepository>(cfg: &mut web::ServiceConfig) {
     cfg.service(
-        web::scope("/customers/{customer_id}/accounts")
+        web::scope("/api/customers/{customer_id}/accounts")
             .service(
                 web::resource("")
                     .route(web::post().to(accounts::handlers::create_account::<T>))

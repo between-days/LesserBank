@@ -195,7 +195,7 @@ mod tests {
                     && acc.balance_cents == 34343
                     && acc.account_type == AccountType::Savings
                     && acc.name == Some("abc".to_string())
-                    && acc.available_balance_cents == 0
+                    && acc.available_balance_cents == 3444
             })
             .times(1)
             .returning(move |_| {
@@ -208,7 +208,7 @@ mod tests {
                     account_status: AccountStatus::Active,
                     name: Some("abc".to_string()),
                     account_number: "012345678".to_string(),
-                    available_balance_cents: 0,
+                    available_balance_cents: 3444,
                     bsb: 123456,
                 })
             });
@@ -224,6 +224,7 @@ mod tests {
         let testpayload = NewAccountRest {
             customer_id,
             balance_cents: 34343,
+            available_balance_cents: 3444,
             account_type: AccountTypeRest::Savings,
             name: Some("abc".to_string()),
         };
@@ -247,7 +248,7 @@ mod tests {
             account_status: AccountStatusRest::Active,
             name: Some("abc".to_string()),
             account_number: "012345678".to_string(),
-            available_balance_cents: 0,
+            available_balance_cents: 3444,
             bsb: 123456,
         };
 
@@ -297,6 +298,7 @@ mod tests {
             Json(NewAccountRest {
                 customer_id,
                 balance_cents: 13424234234,
+                available_balance_cents: 3444,
                 account_type: AccountTypeRest::Savings,
                 name: Some("abc".to_string()),
             }),

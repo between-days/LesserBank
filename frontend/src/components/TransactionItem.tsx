@@ -1,6 +1,6 @@
 
 import { TRANSACTION_ICON_TO_FROM_SIZE } from "@/UIConstants";
-import { getAccountNumberString, getDollarTextFromCents, getIconForTransactionStatus } from "@/UIUtils";
+import { getAccountNumberString, getDollarTextFromCents, getIconForTransactionStatus, getPrettyDate } from "@/UIUtils";
 import { TransactionStatus } from "@/interfaces";
 import { Card, Flex, Group, Paper, Stack, Text, ThemeIcon, useMantineTheme } from "@mantine/core";
 import { useHover } from "@mantine/hooks";
@@ -16,10 +16,10 @@ interface TransactionCardProps {
     amountCents: number
     availableBalanceCents: number
     status: TransactionStatus
-    date: Date
+    date: string
 }
 
-export default function TransactionCard({ fromNumber, fromBsb, toNumber, toBsb, fromName, toName, amountCents, availableBalanceCents, status, date, }: TransactionCardProps) {
+export default function TransactionItem({ fromNumber, fromBsb, toNumber, toBsb, fromName, toName, amountCents, availableBalanceCents, status, date, }: TransactionCardProps) {
     const { hovered, ref } = useHover();
     const theme = useMantineTheme();
 
@@ -31,7 +31,7 @@ export default function TransactionCard({ fromNumber, fromBsb, toNumber, toBsb, 
                         {getDollarTextFromCents(amountCents)}
                     </Text>
                     <Text fz="md" color="dimmed">
-                        {date.toLocaleDateString('en-au')}
+                        {getPrettyDate(date)}
                     </Text>
 
                 </Flex>

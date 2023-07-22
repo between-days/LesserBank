@@ -27,7 +27,7 @@ export interface InternalTransaction {
   amountCents: number
   availableBalanceCents: number
   status: TransactionStatus
-  date: Date
+  date: string
 }
 
 export interface ExternalTransaction {
@@ -40,6 +40,6 @@ export interface ExternalTransaction {
   amountCents: number
   availableBalanceCents: number
   status: TransactionStatus
-  date: Date
+  date: string
   toBusinessName: string
 }

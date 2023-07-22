@@ -3,9 +3,9 @@ import { ACCOUNT_ICON_SIZE, TRANSACTION_ICON_STATUS_SIZE } from "./UIConstants"
 import { IconArrowsUp, IconCircleCheck, IconCloudDollar, IconExclamationCircle, IconReload, IconTimeDuration0 } from "@tabler/icons-react"
 import { AccountType, TransactionStatus } from "./interfaces"
 
-export const getPrettyDate = (date: string) => new Date(date).toLocaleDateString()
+export const getPrettyDate = (date: string) => new Date(date).toLocaleDateString('en-au')
 
-export const getPrettyDateTime = (date: string) => new Date(date).toLocaleTimeString()
+export const getPrettyDateTime = (date: string) => new Date(date).toLocaleTimeString('en-au')
 
 export const getIconForTransactionStatus = (transactionStatus: TransactionStatus) => {
     switch (transactionStatus) {

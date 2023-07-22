@@ -1,4 +1,4 @@
-import { Card, Text, Group, Stack, Flex, MantineShadow, useMantineTheme, Tooltip, Space, Center } from '@mantine/core';
+import { Card, Text, Group, Stack, MantineShadow, Center, Button } from '@mantine/core';
 import { useHover } from '@mantine/hooks';
 import { useRouter } from 'next/router';
 import { getAccountNumberString, getBsbString, getDollarTextFromCents, getIconForAccountType } from '@/UIUtils';
@@ -17,7 +17,8 @@ export interface AccountCardProps {
 export default function AccountCard({ name, accountType, balanceCents, accountNumber, availableBalanceCents, bsb, onHover }: AccountCardProps) {
     const router = useRouter()
     const { hovered, ref } = useHover();
-    const theme = useMantineTheme();
+
+    console.log("got avail: ", availableBalanceCents)
 
     let shadow: MantineShadow | undefined = "sm"
     let withBorder: boolean = false
@@ -30,8 +31,12 @@ export default function AccountCard({ name, accountType, balanceCents, accountNu
         name = accountType.toUpperCase() + " ACCOUNT"
     }
 
+    const onClick = () => {
+        router.push(`/accounts/${accountNumber}`)
+    }
+
     return (
-        <Card ref={ref} onClick={() => { router.push(`/accounts/${accountNumber}`) }} shadow={shadow} radius="lg" withBorder={withBorder}>
+        <Card ref={ref} shadow={shadow} radius="lg" withBorder={withBorder}>
             <Card.Section >
                 <Center
                     sx={(theme) => ({
@@ -43,28 +48,31 @@ export default function AccountCard({ name, accountType, balanceCents, accountNu
                 </Center>
             </Card.Section>
 
-            <Group position="apart" mt="md" mb="xs">
-                <Text weight={500}>{name}</Text>
-                {getIconForAccountType(accountType)}
-            </Group>
-
-            <Stack spacing="xs">
-                <Text weight={500} fz="lg">
-                    {getDollarTextFromCents(availableBalanceCents)}
-                </Text>
-                <Flex
-                    mih={50}
-                    justify="space-between"
-                    align="center"
-                    wrap="wrap"
-                >
-                    <Text color="dimmed">
-                        {getAccountNumberString(accountNumber)}
+            <Stack spacing="xl">
+                <Group position='apart' mt='lg'>
+                    <Group position='left'>
+                        {getIconForAccountType(accountType)}
+                        <Stack spacing={0}>
+                            <Text weight={500} fz="lg">{name}</Text>
+                            <Group>
+                                <Text color="dimmed" fz="sm">
+                                    {getAccountNumberString(accountNumber)}
+                                </Text>
+                                <Text color="dimmed" fz="sm">
+                                    {getBsbString(bsb)}
+                                </Text>
+                            </Group>
+                        </Stack>
+                    </Group>
+                </Group>
+                <Group position='apart'>
+                    <Text weight={500} fz="lg">
+                        {getDollarTextFromCents(availableBalanceCents)}
                     </Text>
-                    <Text color="dimmed">
-                        {getBsbString(bsb)}
-                    </Text>
-                </Flex>
+                    <Button variant="light" onClick={onClick}>
+                        Details
+                    </Button>
+                </Group>
             </Stack>
         </Card>
     );

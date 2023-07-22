@@ -1,8 +1,7 @@
-use crate::models::{Account, AccountStatus, AccountType, FindAccountQuery, NewAccount};
+use crate::models::{Account, AccountStatus, AccountType, NewAccount};
 
 use super::models::{
-    AccountRest, AccountStatusRest, AccountTypeRest, AccountsRest, FindAccountQueryRest,
-    NewAccountRest,
+    AccountRest, AccountStatusRest, AccountTypeRest, AccountsRest, NewAccountRest,
 };
 
 impl From<AccountType> for AccountTypeRest {
@@ -87,20 +86,9 @@ impl From<NewAccountRest> for NewAccount {
             balance_cents: account.balance_cents,
             account_type: account.account_type.into(),
             name: account.name,
-            available_balance_cents: 0,
+            available_balance_cents: account.available_balance_cents,
             // database will only allow a 9 digit number
             account_number: "".to_string(),
-        }
-    }
-}
-
-impl From<NewAccount> for NewAccountRest {
-    fn from(account: NewAccount) -> Self {
-        NewAccountRest {
-            customer_id: account.customer_id,
-            balance_cents: account.balance_cents,
-            account_type: account.account_type.into(),
-            name: account.name,
         }
     }
 }

@@ -37,6 +37,7 @@ pub struct AccountRest {
 pub struct NewAccountRest {
     pub customer_id: i32,
     pub balance_cents: i64,
+    pub available_balance_cents: i64,
     pub account_type: AccountTypeRest,
     pub name: Option<String>,
 }
@@ -53,7 +54,7 @@ pub struct AccountsRest {
 pub struct FindAccountQueryRest {
     pub account_id: Option<i32>,
     // TODO: consider removing
-    // if queries come from other than person owning account this is useful but i doubt we'll use it 
+    // if queries come from other than person owning account this is useful but i doubt we'll use it
     pub customer_id: Option<i32>,
     pub account_number: Option<String>,
 }

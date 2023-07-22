@@ -78,7 +78,7 @@ export function CustomNavBarAlt2() {
     const [activeLink, setActiveLink] = useState('Settings');
 
     const links = linksMockdata.map((link) => (
-        <Group  >
+        <Group  key={link}>
             <ThemeIcon variant="light" size="xl">
                 <IconHome2 />
             </ThemeIcon>
