@@ -1,8 +1,7 @@
-
 import { TRANSACTION_ICON_TO_FROM_SIZE } from "@/UIConstants";
 import { getAccountNumberString, getDollarTextFromCents, getIconForTransactionStatus, getPrettyDate } from "@/UIUtils";
 import { TransactionStatus } from "@/interfaces";
-import { Card, Flex, Group, Paper, Stack, Text, ThemeIcon, useMantineTheme } from "@mantine/core";
+import { Flex, Group, Paper, Stack, Text, ThemeIcon, useMantineTheme } from "@mantine/core";
 import { useHover } from "@mantine/hooks";
 import { IconArrowBadgeRight } from "@tabler/icons-react";
 

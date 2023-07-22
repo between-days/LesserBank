@@ -1,5 +1,5 @@
 import useSWR, { SWRResponse } from 'swr'
-import { BASE_URL } from './Constants'
+import { BASE_URL, CUSTOMER_ID } from './Constants'
 import { Account, AccountType, Accounts } from '@/interfaces'
 import apiFetcher from './ApiFetcher'
 
@@ -27,7 +27,7 @@ export const useAccounts = (query?: FindAccountQuery): SWRResponse<Account[]> =>
 
     const fetcher = (url: string) => apiFetcher<Accounts>(url).then(data => data.accounts)
 
-    return useSWR(`${BASE_URL}/customers/1/accounts${queryString}`, fetcher)
+    return useSWR(`${BASE_URL}/customers/${CUSTOMER_ID}/accounts${queryString}`, fetcher)
 }
 
 export const useOneAccount = (query: FindAccountQuery): SWRResponse<Account> => {
@@ -42,5 +42,5 @@ export const useOneAccount = (query: FindAccountQuery): SWRResponse<Account> => 
         return data.accounts[0]
     })
 
-    return useSWR(`${BASE_URL}/customers/1/accounts${queryString}`, fetcher)
+    return useSWR(`${BASE_URL}/customers/${CUSTOMER_ID}/accounts${queryString}`, fetcher)
 }

@@ -18,8 +18,6 @@ export default function AccountCard({ name, accountType, balanceCents, accountNu
     const router = useRouter()
     const { hovered, ref } = useHover();
 
-    console.log("got avail: ", availableBalanceCents)
-
     let shadow: MantineShadow | undefined = "sm"
     let withBorder: boolean = false
     if (onHover) {
