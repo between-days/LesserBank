@@ -16,10 +16,7 @@ export function AccountDetailContent({ children, accountNumber }: AccountDetailC
     const theme = useMantineTheme()
     const { data, error } = useOneAccount({ accountNumber })
 
-    if (error) {
-        console.log("error: ", error)
-        return <InternalErrorContent />
-    }
+    if (error) return <InternalErrorContent />
 
     if (!data) return <AccountDetailLoadingContent accountNumber={accountNumber}>
         {children}

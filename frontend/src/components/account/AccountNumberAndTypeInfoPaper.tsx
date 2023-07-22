@@ -1,6 +1,7 @@
 import { getAccountNumberString, getBsbString, getIconForAccountType } from "@/UIUtils"
 import { AccountType } from "@/interfaces"
-import { Group, Paper, Stack, Text } from "@mantine/core"
+import { Group, Paper } from "@mantine/core"
+import { TextAndSubtext } from "../shared/TextAndSubtext"
 
 interface AccountNumberAndTypeInfoPaperProps {
     accountNumber: number,
@@ -12,14 +13,7 @@ export const AccountNumberAndTypeInfoPaper = ({ accountNumber, accountType, bsb 
     return <Paper withBorder shadow="sm" radius="lg" p="md" key={"aaaaa"}>
         <Group>
             {getIconForAccountType(accountType)}
-            <Stack spacing={0}>
-                <Text size="md" weight={500}>
-                    {getAccountNumberString(accountNumber)}
-                </Text>
-                <Text size="xs" color="dimmed">
-                    {getBsbString(bsb)}
-                </Text>
-            </Stack>
+            <TextAndSubtext text={getAccountNumberString(accountNumber)} subText={getBsbString(bsb)} textSize="md" subTextSize="xs" />
         </Group>
     </Paper>
 }

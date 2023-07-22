@@ -1,5 +1,6 @@
 import { getDollarTextFromCents } from "@/UIUtils"
-import { Paper, Stack, Text } from "@mantine/core"
+import { Paper, Stack} from "@mantine/core"
+import { TextAndSubtext } from "../shared/TextAndSubtext"
 
 interface AccountBalancesInfoPaperProps {
     availableBalanceCents: number,
@@ -9,22 +10,8 @@ interface AccountBalancesInfoPaperProps {
 export const AccountBalancesInfoPaper = ({ availableBalanceCents, balanceCents }: AccountBalancesInfoPaperProps) => {
     return <Paper withBorder shadow="sm" radius="lg" p="md" h="11rem">
         <Stack>
-            <Stack spacing={0} key={0}>
-                <Text size="xl" weight={500} key={0}>
-                    {getDollarTextFromCents(availableBalanceCents)}
-                </Text>
-                <Text size="md" color="dimmed" key={1}>
-                    Available Balance
-                </Text>
-            </Stack>
-            <Stack spacing={0} key={1}>
-                <Text size="xl" weight={500} key={0}>
-                    {getDollarTextFromCents(balanceCents)}
-                </Text>
-                <Text size="md" color="dimmed" key={1}>
-                    Balance
-                </Text>
-            </Stack>
+            <TextAndSubtext text={getDollarTextFromCents(availableBalanceCents)} subText="Available Balance" textSize="xl" subTextSize="md" />
+            <TextAndSubtext text={getDollarTextFromCents(balanceCents)} subText="Balance" textSize="xl" subTextSize="md" />
         </Stack>
     </Paper>
 }

@@ -16,13 +16,6 @@ export default function AccountDetail(props: { slug: any; }) {
 
     const accountNumber = Number(slug)
 
-    // skeleton
-    // const transactionsContent = Array(8).fill(0).map((_, i) =>
-    // <div key={i}>
-    //     <Skeleton w="100%" h="5rem" radius="lg" />
-    //     <Space h="md" />
-    // </div>
-
     const transactions = mockTransactions()
     const transactionsContent = transactions.map((transaction, i) =>
         <div key={i}>
