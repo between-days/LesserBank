@@ -4,10 +4,10 @@ on:
   push:
     branches: ["main"]
     paths:
-    - '**Cargo**'
-    - '**diesel**'
-    - 'api/src**'
-    - '.github/workflows/rust.yml'
+      - "**Cargo**"
+      - "**diesel**"
+      - "api/src**"
+      - ".github/workflows/rust.yml"
 
 env:
   CARGO_TERM_COLOR: always
