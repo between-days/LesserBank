@@ -1,7 +1,11 @@
 // db models. For now these are also domain models
 
-use crate::schema::accounts;
+use crate::{schema::accounts, traits::AccountsRepository};
 use diesel::prelude::*;
+
+pub struct AppState<AR: AccountsRepository> {
+    pub accounts_repo: AR,
+}
 
 #[derive(diesel_derive_enum::DbEnum, Copy, Clone, Debug, PartialEq)]
 #[ExistingTypePath = "crate::schema::sql_types::AccountType"]

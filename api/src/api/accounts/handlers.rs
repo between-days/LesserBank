@@ -7,11 +7,11 @@ use super::models::{AccountRest, AccountsRest, FindAccountQueryRest, NewAccountR
 
 use crate::api::accounts::util::get_random_account_number;
 use crate::error::RepoError;
-use crate::models::{FindAccountQuery, NewAccount};
+use crate::models::{AppState, FindAccountQuery, NewAccount};
 use crate::traits::AccountsRepository;
 
 pub async fn create_account<T: AccountsRepository>(
-    accounts_repo: Data<T>,
+    app_state: Data<AppState<T>>,
     path: Path<i32>,
     payload: web::Json<NewAccountRest>,
 ) -> Result<HttpResponse, actix_web::Error> {
@@ -32,7 +32,7 @@ pub async fn create_account<T: AccountsRepository>(
         new_account.account_type, customer_id
     );
 
-    let account = web::block(move || accounts_repo.create_account(new_account))
+    let account = web::block(move || app_state.accounts_repo.create_account(new_account))
         .await
         .map_err(|_| AccountsApiError::InternalError)?
         .map_err(|_| AccountsApiError::InternalError)?;
@@ -43,7 +43,7 @@ pub async fn create_account<T: AccountsRepository>(
 }
 
 pub async fn find_accounts<T: AccountsRepository>(
-    accounts_repo: Data<T>,
+    app_state: Data<AppState<T>>,
     path: Path<i32>,
     query: Query<FindAccountQueryRest>,
 ) -> Result<HttpResponse, actix_web::Error> {
@@ -61,7 +61,7 @@ pub async fn find_accounts<T: AccountsRepository>(
 
     println!("Trying to get accounts for customer {}", customer_id);
 
-    let accounts = web::block(move || accounts_repo.find_accounts(query))
+    let accounts = web::block(move || app_state.accounts_repo.find_accounts(query))
         .await
         .map_err(|_| AccountsApiError::InternalError)?
         .map_err(|_| AccountsApiError::InternalError)?;
@@ -81,7 +81,7 @@ pub async fn find_accounts<T: AccountsRepository>(
 }
 
 pub async fn get_account<T: AccountsRepository>(
-    accounts_repo: Data<T>,
+    app_state: Data<AppState<T>>,
     path: Path<(i32, i32)>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let (customer_id, account_id) = path.into_inner();
@@ -91,7 +91,7 @@ pub async fn get_account<T: AccountsRepository>(
         account_id, customer_id
     );
 
-    let account = web::block(move || accounts_repo.get_account(account_id))
+    let account = web::block(move || app_state.accounts_repo.get_account(account_id))
         .await
         .map_err(|_| AccountsApiError::InternalError)?
         .map_err(|err| match err {
@@ -109,7 +109,7 @@ pub async fn get_account<T: AccountsRepository>(
 }
 
 pub async fn delete_account<T: AccountsRepository>(
-    accounts_repo: Data<T>,
+    app_state: Data<AppState<T>>,
     path: Path<(i32, i32)>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let (customer_id, account_id) = path.into_inner();
@@ -120,7 +120,7 @@ pub async fn delete_account<T: AccountsRepository>(
     );
 
     web::block(move || {
-        let get_acc_res = accounts_repo.get_account(account_id);
+        let get_acc_res = app_state.accounts_repo.get_account(account_id);
 
         let check_account_error: Option<AccountsApiError> = match get_acc_res {
             Ok(acc) => {
@@ -139,7 +139,8 @@ pub async fn delete_account<T: AccountsRepository>(
             return Err(cc);
         }
 
-        accounts_repo
+        app_state
+            .accounts_repo
             .delete_account(account_id)
             .map_err(|_| AccountsApiError::InternalError)
     })
@@ -163,7 +164,7 @@ mod tests {
             },
         },
         error::RepoError,
-        models::{Account, AccountStatus, AccountType, FindAccountQuery, NewAccount},
+        models::{Account, AccountStatus, AccountType, AppState, FindAccountQuery, NewAccount},
         traits::MockAccountsRepository,
     };
 
@@ -176,6 +177,13 @@ mod tests {
     };
     use chrono::{NaiveDate, NaiveDateTime};
     use mockall::{predicate::eq, Sequence};
+    use rand::rngs::mock;
+
+    impl AppState<MockAccountsRepository> {
+        pub fn new(accounts_repo: MockAccountsRepository) -> Self {
+            Self { accounts_repo }
+        }
+    }
 
     #[actix_web::test]
     async fn test_create_account_success() {
@@ -213,8 +221,10 @@ mod tests {
                 })
             });
 
+        let mock_app_state_data = Data::new(AppState::<MockAccountsRepository>::new(mock_repo));
+
         let mut app = test::init_service(
-            App::new().app_data(Data::new(mock_repo)).service(
+            App::new().app_data(mock_app_state_data).service(
                 web::resource("/customers/{customer_id}/accounts")
                     .route(web::post().to(create_account::<MockAccountsRepository>)),
             ),
@@ -253,23 +263,7 @@ mod tests {
         };
 
         let actual_account: AccountRest = test::read_body_json(resp).await;
-        assert_eq!(expected_account.id, actual_account.id);
-        assert_eq!(expected_account.customer_id, actual_account.customer_id);
-        assert_eq!(expected_account.balance_cents, actual_account.balance_cents);
-        assert_eq!(expected_account.account_type, actual_account.account_type);
-        assert_eq!(
-            expected_account.date_opened.to_string(),
-            actual_account.date_opened
-        );
-        assert_eq!(
-            expected_account.account_status,
-            actual_account.account_status
-        );
-        assert_eq!(expected_account.name, actual_account.name);
-        assert_eq!(
-            expected_account.available_balance_cents,
-            actual_account.available_balance_cents
-        );
+        assert_eq!(expected_account, actual_account)
     }
 
     #[actix_web::test]
@@ -292,8 +286,10 @@ mod tests {
             .times(1)
             .returning(move |_| Err(RepoError::Other));
 
+        let mock_app_state_data = Data::new(AppState::<MockAccountsRepository>::new(mock_repo));
+
         let res = create_account(
-            Data::new(mock_repo),
+            mock_app_state_data,
             customer_id.into(),
             Json(NewAccountRest {
                 customer_id,
@@ -360,8 +356,10 @@ mod tests {
                 ])
             });
 
+        let mock_app_state_data = Data::new(AppState::<MockAccountsRepository>::new(mock_repo));
+
         let mut app = test::init_service(
-            App::new().app_data(Data::new(mock_repo)).service(
+            App::new().app_data(mock_app_state_data).service(
                 web::resource("/customers/{customer_id}/accounts")
                     .route(web::get().to(find_accounts::<MockAccountsRepository>)),
             ),
@@ -428,8 +426,10 @@ mod tests {
             .times(1)
             .returning(move |_| Err(RepoError::Other));
 
+        let mock_app_state_data = Data::new(AppState::<MockAccountsRepository>::new(mock_repo));
+
         let mut app = test::init_service(
-            App::new().app_data(Data::new(mock_repo)).service(
+            App::new().app_data(mock_app_state_data).service(
                 web::resource("/customers/{customer_id}/accounts")
                     .route(web::get().to(find_accounts::<MockAccountsRepository>)),
             ),
@@ -474,7 +474,9 @@ mod tests {
                 })
             });
 
-        let res = get_account(Data::new(mock_repo), (customer_id, account_id).into())
+        let mock_app_state_data = Data::new(AppState::<MockAccountsRepository>::new(mock_repo));
+
+        let res = get_account(mock_app_state_data, (customer_id, account_id).into())
             .await
             .unwrap();
 
@@ -512,7 +514,9 @@ mod tests {
             .times(1)
             .returning(move |_| Err(RepoError::Other));
 
-        let res = get_account(Data::new(mock_repo), (customer_id, account_id).into()).await;
+        let mock_app_state_data = Data::new(AppState::<MockAccountsRepository>::new(mock_repo));
+
+        let res = get_account(mock_app_state_data, (customer_id, account_id).into()).await;
 
         assert!(
             res.is_err_and(|e| { e.to_string() == AccountsApiError::InternalError.to_string() })
@@ -531,7 +535,9 @@ mod tests {
             .times(1)
             .returning(move |_| Err(RepoError::NotFound));
 
-        let res = get_account(Data::new(mock_repo), (customer_id, account_id).into()).await;
+        let mock_app_state_data = Data::new(AppState::<MockAccountsRepository>::new(mock_repo));
+
+        let res = get_account(mock_app_state_data, (customer_id, account_id).into()).await;
 
         assert!(res.is_err_and(|e| { e.to_string() == AccountsApiError::NotFound.to_string() }));
     }
@@ -565,7 +571,9 @@ mod tests {
                 })
             });
 
-        let res = get_account(Data::new(mock_repo), (wrong_customer_id, account_id).into()).await;
+        let mock_app_state_data = Data::new(AppState::<MockAccountsRepository>::new(mock_repo));
+
+        let res = get_account(mock_app_state_data, (wrong_customer_id, account_id).into()).await;
 
         assert!(res.is_err_and(|e| { e.to_string() == AccountsApiError::Unauthorized.to_string() }));
     }
@@ -609,7 +617,9 @@ mod tests {
             .returning(|_| Ok(()))
             .in_sequence(&mut seq);
 
-        let res = delete_account(Data::new(mock_repo), (customer_id, account_id).into())
+        let mock_app_state_data = Data::new(AppState::<MockAccountsRepository>::new(mock_repo));
+
+        let res = delete_account(mock_app_state_data, (customer_id, account_id).into())
             .await
             .unwrap();
 
@@ -645,7 +655,9 @@ mod tests {
             .returning(|_| Ok(()))
             .in_sequence(&mut seq);
 
-        let res = delete_account(Data::new(mock_repo), (customer_id, account_id).into())
+        let mock_app_state_data = Data::new(AppState::<MockAccountsRepository>::new(mock_repo));
+
+        let res = delete_account(mock_app_state_data, (customer_id, account_id).into())
             .await
             .unwrap();
 
@@ -687,8 +699,9 @@ mod tests {
                 })
             });
 
-        let res =
-            delete_account(Data::new(mock_repo), (wrong_customer_id, account_id).into()).await;
+        let mock_app_state_data = Data::new(AppState::<MockAccountsRepository>::new(mock_repo));
+
+        let res = delete_account(mock_app_state_data, (wrong_customer_id, account_id).into()).await;
 
         assert!(res.is_err_and(|e| { e.to_string() == AccountsApiError::Unauthorized.to_string() }));
     }
@@ -704,7 +717,9 @@ mod tests {
             .times(1)
             .returning(move |_| Err(RepoError::Other));
 
-        let res = delete_account(Data::new(mock_repo), (customer_id, account_id).into()).await;
+        let mock_app_state_data = Data::new(AppState::<MockAccountsRepository>::new(mock_repo));
+
+        let res = delete_account(mock_app_state_data, (customer_id, account_id).into()).await;
 
         assert!(
             res.is_err_and(|e| { e.to_string() == AccountsApiError::InternalError.to_string() })
