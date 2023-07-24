@@ -9,7 +9,7 @@ export interface AccountCardProps {
     accountType: AccountType
     balanceCents: number
     availableBalanceCents: number
-    accountNumber: number
+    accountNumber: string
     bsb: number,
     onHover: boolean
 }
@@ -35,20 +35,9 @@ export default function AccountCard({ name, accountType, balanceCents, accountNu
 
     return (
         <Card ref={ref} shadow={shadow} radius="lg" withBorder={withBorder}>
-            <Card.Section >
-                <Center
-                    sx={(theme) => ({
-                        height: '0.5rem',
-                        backgroundImage: theme.fn.gradient({ from: 'red', to: 'orange', deg: 45 }),
-                        color: theme.white,
-                    })}
-                >
-                </Center>
-            </Card.Section>
-
             <Stack spacing="xl">
                 <Group position='apart' mt='lg'>
-                    <Group position='left'>
+                    <Group position='left' noWrap>
                         {getIconForAccountType(accountType)}
                         <Stack spacing={0}>
                             <Text weight={500} fz="lg">{name}</Text>

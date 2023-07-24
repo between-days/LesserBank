@@ -4,13 +4,13 @@ import { Group, Paper } from "@mantine/core"
 import { TextAndSubtext } from "../shared/TextAndSubtext"
 
 interface AccountNumberAndTypeInfoPaperProps {
-    accountNumber: number,
+    accountNumber: string,
     bsb: number,
     accountType: AccountType
 }
 
 export const AccountNumberAndTypeInfoPaper = ({ accountNumber, accountType, bsb }: AccountNumberAndTypeInfoPaperProps) => {
-    return <Paper withBorder shadow="sm" radius="lg" p="md" key={"aaaaa"}>
+    return <Paper withBorder shadow="sm" radius="lg" p="md">
         <Group>
             {getIconForAccountType(accountType)}
             <TextAndSubtext text={getAccountNumberString(accountNumber)} subText={getBsbString(bsb)} textSize="md" subTextSize="xs" />

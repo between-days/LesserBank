@@ -1,6 +1,7 @@
 export type AccountStatus = "active" | "inactive"
-export type TransactionStatus = "complete" | "pending" | "error"
 export type AccountType = "savings" | "termDeposit" | "transaction"
+export type TransactionStatus = "success" | "pending" | "error"
+export type TransactionType = "internal" | "external"
 
 export interface Account {
   dateOpened: string
@@ -9,7 +10,7 @@ export interface Account {
   accountType: AccountType
   balanceCents: number
   availableBalanceCents: number
-  accountNumber: number
+  accountNumber: string
   bsb: number
 }
 
@@ -17,29 +18,21 @@ export interface Accounts {
   accounts: Account[]
 }
 
-export interface InternalTransaction {
-  fromNumber: number
-  fromBsb: number
-  toNumber: number
-  toBsb: number
+export interface Transaction {
+  transactionType: TransactionType,
+  fromNumber: string
+  fromBsb: string
+  toNumber: string
+  toBsb: string
   fromName: string | undefined
   toName: string | undefined
   amountCents: number
   availableBalanceCents: number
-  status: TransactionStatus
-  date: string
+  transactionStatus: TransactionStatus
+  dateStart: string
+  dateEnd: string
 }
 
-export interface ExternalTransaction {
-  fromNumber: number
-  fromBsb: number
-  toNumber: number
-  toBsb: number
-  fromName: string | undefined
-  toName: string | undefined
-  amountCents: number
-  availableBalanceCents: number
-  status: TransactionStatus
-  date: string
-  toBusinessName: string
+export interface Transactions {
+  transactions: Transaction[]
 }

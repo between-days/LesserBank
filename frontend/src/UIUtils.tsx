@@ -9,13 +9,6 @@ export const getPrettyDateTime = (date: string) => new Date(date).toLocaleTimeSt
 
 export const getIconForTransactionStatus = (transactionStatus: TransactionStatus) => {
     switch (transactionStatus) {
-        case "complete":
-            return <Tooltip label="complete" position="right" transitionProps={{ duration: 0 }}>
-                <ThemeIcon size={TRANSACTION_ICON_STATUS_SIZE} variant="light" radius="md">
-                    <IconCircleCheck />
-                </ThemeIcon>
-
-            </Tooltip>
         case "pending":
             return <Tooltip label="pending" position="right" transitionProps={{ duration: 0 }}>
                 <ThemeIcon size={TRANSACTION_ICON_STATUS_SIZE} variant="light" radius="md">
@@ -23,9 +16,16 @@ export const getIconForTransactionStatus = (transactionStatus: TransactionStatus
                 </ThemeIcon>
 
             </Tooltip>
+        case "success":
+            return <Tooltip label="complete" position="right" transitionProps={{ duration: 0 }}>
+                <ThemeIcon size={TRANSACTION_ICON_STATUS_SIZE} variant="light" radius="md">
+                    <IconCircleCheck />
+                </ThemeIcon>
+
+            </Tooltip>
         default:
             return <Tooltip label={"error"} position="right" transitionProps={{ duration: 0 }}>
-                <ThemeIcon size={TRANSACTION_ICON_STATUS_SIZE} variant="outline" radius="md">
+                <ThemeIcon size={TRANSACTION_ICON_STATUS_SIZE} variant="filled" radius="md" color="red">
                     <IconExclamationCircle />
                 </ThemeIcon>
             </Tooltip>
@@ -69,41 +69,42 @@ export function getDollarTextFromCents(balanceCents: number) {
     return `$${balanceDollars.toLocaleString()}`
 }
 
-export function getBsbString(bsb: number) {
+// TODO: remove number type when bsb on account is string too
+export function getBsbString(bsb: number | string) {
     const bsbString = bsb.toString()
     return bsbString.substring(0, 3) + " " + bsbString.substring(3, 6)
 }
 
-export function getAccountNumberString(accountNumber: number) {
-    const anString = accountNumber.toString()
-    return anString.substring(0, 3) + " " + anString.substring(3, 6) + " " + anString.substring(6, 10)
+export function getAccountNumberString(accountNumber: string) {
+    return accountNumber.substring(0, 3) + " " + accountNumber.substring(3, 6) + " " + accountNumber.substring(6, 10)
 }
 
-export function getAccountCardImage(accountType: AccountType) {
-    switch (accountType) {
-        case "savings":
-            return <Image
-                src="https://images.unsplash.com/photo-1579621970588-a35d0e7ab9b6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3540&q=80"
-                height={150}
-                alt="Savings"
-            />
-        case "termDeposit":
-            return <Image
-                src="https://images.unsplash.com/photo-1531161348856-92e5c7b2e6de?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3542&q=80"
-                height={150}
-                alt="Term Deposit"
-            />
-        case "transaction":
-            return <Image
-                src="https://images.unsplash.com/photo-1488330890490-c291ecf62571?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2370&q=80"
-                height={150}
-                alt="Transaction"
-            />
-        default:
-            return <Image
-                src="https://images.unsplash.com/photo-1579621970588-a35d0e7ab9b6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3540&q=80"
-                height={150}
-                alt="Unknown"
-            />
-    }
-}
+// we probably won't need this
+// export function getAccountCardImage(accountType: AccountType) {
+//     switch (accountType) {
+//         case "savings":
+//             return <Image
+//                 src="https://images.unsplash.com/photo-1579621970588-a35d0e7ab9b6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3540&q=80"
+//                 height={150}
+//                 alt="Savings"
+//             />
+//         case "termDeposit":
+//             return <Image
+//                 src="https://images.unsplash.com/photo-1531161348856-92e5c7b2e6de?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3542&q=80"
+//                 height={150}
+//                 alt="Term Deposit"
+//             />
+//         case "transaction":
+//             return <Image
+//                 src="https://images.unsplash.com/photo-1488330890490-c291ecf62571?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2370&q=80"
+//                 height={150}
+//                 alt="Transaction"
+//             />
+//         default:
+//             return <Image
+//                 src="https://images.unsplash.com/photo-1579621970588-a35d0e7ab9b6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3540&q=80"
+//                 height={150}
+//                 alt="Unknown"
+//             />
+//     }
+// }

@@ -1,13 +1,14 @@
 import TransactionItem from "@/components/transaction/TransactionItem";
-import { mockTransactions } from "@/mockBackend";
-import { Grid, Group, Skeleton, Space, Stack, Title, useMantineTheme, } from "@mantine/core";
+import { Box, Button, Card, Center, Container, Grid, Group, Paper, Skeleton, Space, Stack, Title, useMantineTheme, } from "@mantine/core";
 import React from 'react';
 import CustomPage from "@/components/shared/CustomPage";
 import { AccountNumberAndTypeInfoPaper } from "@/components/account/AccountNumberAndTypeInfoPaper";
 import { AccountOpenedInfoPaper } from "@/components/account/AccountOpenedInfoPaper";
-import { AccountBalancesInfoPaper } from "@/components/account/AccountBalancesInfoPaper";
+import { AccountBalancesInfoCard } from "@/components/account/AccountBalancesInfoCard";
 import { useOneAccount } from "@/services/AccountsService";
 import { InternalErrorContent } from "@/components/shared/error/InternalErrorContent";
+import { useTransactions } from "@/services/TransactionsService";
+import { IconArrowBarToRight } from "@tabler/icons-react";
 
 export const getServerSideProps = async (context: { query: { slug: any; }; }) => {
     let { slug } = context.query;
@@ -52,24 +53,32 @@ export default function AccountDetail(props: { slug: any; }) {
 
     const theme = useMantineTheme()
 
-    const accountNumber = Number(slug)
+    const accountNumber = slug
 
-    const { data, error } = useOneAccount({ accountNumber })
-    const transactions = mockTransactions()
+    const { data: account, error: accountsError } = useOneAccount({ accountNumber })
+    const { data: transactions, error: transactionsError } = useTransactions({ accountNumber })
 
-    if (error) return <InternalErrorContent />
+    if (accountsError) return <InternalErrorContent />
+    if (transactionsError) return <InternalErrorContent />
 
-    const transactionsContent = transactions.map((transaction, i) =>
-        <div key={i}>
-            <TransactionItem {...transaction} />
-            <Space h="md" />
-        </div>)
+    const transactionsContent = accountNumber && transactions
+        ? <div>
+            {transactions.length > 0 && <>
+                <Title order={2}>Transactions</Title>
+                <Space mb="md" />
+            </>}
 
-    if (!accountNumber || !data) return <AccountDetailsLoadingContent>
+            {transactions.map((transaction, i) =>
+                <div key={i}>
+                    <TransactionItem {...transaction} />
+                    <Space h="md" />
+                </div>)}
+        </div>
+        : <>Loading...</>
+
+    if (!accountNumber || !account) return <AccountDetailsLoadingContent>
         {transactionsContent}
     </AccountDetailsLoadingContent>
-
-    const account = data
 
     const { name, dateOpened, balanceCents, availableBalanceCents, accountType, bsb } = account
 
@@ -82,9 +91,9 @@ export default function AccountDetail(props: { slug: any; }) {
                 </Title>
             </Group>
         }>
-            <Grid>
+            <Grid miw="50rem">
                 <Grid.Col xs={3}>
-                    <AccountBalancesInfoPaper availableBalanceCents={availableBalanceCents} balanceCents={balanceCents} />
+                    <AccountBalancesInfoCard availableBalanceCents={availableBalanceCents} balanceCents={balanceCents} />
                 </Grid.Col>
                 <Grid.Col xs={4}>
                     <Stack align="stretch" justify="center">
@@ -92,12 +101,15 @@ export default function AccountDetail(props: { slug: any; }) {
                         <AccountOpenedInfoPaper dateOpened={dateOpened} />
                     </Stack>
                 </Grid.Col>
-                <Grid.Col xs={12} >
-                    <div>
-                        <Title order={2}>Transactions</Title>
-                        <Space mb="md" />
-                        {transactionsContent}
-                    </div>
+                {/* <Grid.Col xs={3}>
+                    <Card withBorder shadow="sm" radius="lg" p="md" h="11rem">
+                        <Center>
+                            <Button leftIcon={<IconArrowBarToRight size="1rem" style={{marginRight: "1rem"}}/>} variant="filled" > New Transaction</Button>
+                        </Center>
+                    </Card>
+                </Grid.Col> */}
+                <Grid.Col xs={12}>
+                    {transactionsContent}
                 </Grid.Col>
             </Grid>
         </CustomPage>

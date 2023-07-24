@@ -1,4 +1,4 @@
-import { Container, Flex, Space, useMantineTheme } from "@mantine/core"
+import { Center, Container, Flex, Group, Space, Stack, useMantineTheme } from "@mantine/core"
 import { CustomNavBar } from "./CustomNavBar"
 
 interface CustomPageProps {
@@ -9,12 +9,13 @@ interface CustomPageProps {
 export default function CustomPage({ title, children }: CustomPageProps) {
     const theme = useMantineTheme()
     return (
-        <Flex bg={theme.colors.gray[1]} >
+        <Flex bg={theme.colors.gray[1]}>
             <CustomNavBar />
-            <Container mt="5rem" size="lg">
-                {title}
-                <Space h="xl" />
-                {children}
+            <Container mt="6rem">
+                <Stack>
+                    {title}
+                    {children}
+                </Stack>
             </Container>
         </Flex>
     )
