@@ -2,7 +2,10 @@
 
 use crate::{
     error::RepoError,
-    models::{Account, FindAccountQuery, NewAccount},
+    models::{
+        account::{Account, FindAccountQuery, NewAccount},
+        transaction::{FindTransactionQuery, NewTransaction, Transaction},
+    },
 };
 
 #[cfg(test)]
@@ -17,4 +20,15 @@ pub trait AccountsRepository: 'static + Sync + Send {
     fn find_accounts(&self, account_query: FindAccountQuery) -> Result<Vec<Account>, RepoError>;
 
     fn delete_account(&self, account_id: i32) -> Result<(), RepoError>;
+}
+
+#[cfg_attr(test, automock)]
+pub trait TransactionsRepository: 'static + Sync + Send {
+    fn create_transaction(&self, new_transaction: NewTransaction)
+        -> Result<Transaction, RepoError>;
+
+    fn find_transactions(
+        &self,
+        transaction_query: FindTransactionQuery,
+    ) -> Result<Vec<Transaction>, RepoError>;
 }

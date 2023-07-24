@@ -5,7 +5,7 @@ use diesel::{
 
 use crate::{
     error::RepoError,
-    models::{Account, FindAccountQuery, NewAccount},
+    models::account::{Account, FindAccountQuery, NewAccount},
     schema::{self, accounts},
     traits::AccountsRepository,
 };

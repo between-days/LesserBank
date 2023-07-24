@@ -1,11 +1,6 @@
-// db models. For now these are also domain models
+use diesel::{Insertable, Queryable, Selectable};
 
-use crate::{schema::accounts, traits::AccountsRepository};
-use diesel::prelude::*;
-
-pub struct AppState<AR: AccountsRepository> {
-    pub accounts_repo: AR,
-}
+use crate::schema::accounts;
 
 #[derive(diesel_derive_enum::DbEnum, Copy, Clone, Debug, PartialEq)]
 #[ExistingTypePath = "crate::schema::sql_types::AccountType"]
@@ -23,7 +18,7 @@ pub enum AccountStatus {
 }
 
 #[derive(Clone, Queryable, Selectable)]
-#[diesel(table_name = crate::schema::accounts)]
+#[diesel(table_name = accounts)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Account {
     pub id: i32,
@@ -49,6 +44,7 @@ pub struct NewAccount {
     pub account_number: String,
 }
 
+#[derive(Clone)]
 #[cfg_attr(test, derive(Debug, PartialEq))]
 pub struct FindAccountQuery {
     pub account_id: Option<i32>,

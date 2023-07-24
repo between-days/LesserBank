@@ -7,20 +7,20 @@ use actix_web::{
 };
 
 #[derive(Debug)]
-pub enum AccountsApiError {
+pub enum ApiError {
     NotFound,
     InternalError,
     Unauthorized,
     BadRequest,
 }
 
-impl fmt::Display for AccountsApiError {
+impl fmt::Display for ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", *self)
     }
 }
 
-impl error::ResponseError for AccountsApiError {
+impl error::ResponseError for ApiError {
     fn error_response(&self) -> HttpResponse {
         HttpResponse::build(self.status_code())
             .insert_header(ContentType::plaintext())
@@ -34,10 +34,10 @@ impl error::ResponseError for AccountsApiError {
 
     fn status_code(&self) -> StatusCode {
         match *self {
-            AccountsApiError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
-            AccountsApiError::NotFound => StatusCode::NOT_FOUND,
-            AccountsApiError::Unauthorized => StatusCode::UNAUTHORIZED,
-            AccountsApiError::BadRequest => StatusCode::BAD_REQUEST,
+            ApiError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::NotFound => StatusCode::NOT_FOUND,
+            ApiError::Unauthorized => StatusCode::UNAUTHORIZED,
+            ApiError::BadRequest => StatusCode::BAD_REQUEST,
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::models::{Account, AccountStatus, AccountType, NewAccount};
+use crate::models::account::{Account, AccountStatus, AccountType, NewAccount};
 
 use super::models::{
     AccountRest, AccountStatusRest, AccountTypeRest, AccountsRest, NewAccountRest,
