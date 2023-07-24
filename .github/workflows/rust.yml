@@ -6,7 +6,7 @@ on:
     paths:
       - "**Cargo**"
       - "**diesel**"
-      - "api/src**"
+      - "**.rs"
       - ".github/workflows/rust.yml"
 
 env:
