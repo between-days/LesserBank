@@ -122,7 +122,6 @@ impl From<NewInternalTransactionRest> for NewTransaction {
             to_bsb: tr.to_bsb,
             to_name: Some("".to_string()),
             available_balance_cents: 0,
-            date_start: chrono::NaiveDateTime::from_timestamp_millis(0).unwrap(),
             transaction_status: TransactionStatus::Pending,
         }
     }

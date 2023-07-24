@@ -52,7 +52,7 @@ pub struct NewTransaction {
     pub to_bsb: String,
     pub to_name: Option<String>,
     pub available_balance_cents: i64,
-    pub date_start: chrono::NaiveDateTime,
+    // pub date_start: chrono::NaiveDateTime, // set by db
     pub transaction_status: TransactionStatus,
 }
 

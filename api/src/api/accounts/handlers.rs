@@ -7,14 +7,11 @@ use super::models::{AccountRest, AccountsRest, FindAccountQueryRest, NewAccountR
 use crate::api::accounts::util::get_random_account_number;
 use crate::api::error::ApiError;
 use crate::error::RepoError;
-use crate::models::{
-    account::{FindAccountQuery, NewAccount},
-    AppState,
-};
-use crate::traits::{AccountsRepository, TransactionsRepository};
+use crate::models::account::{FindAccountQuery, NewAccount};
+use crate::traits::AccountsRepository;
 
-pub async fn create_account<AR: AccountsRepository, TR: TransactionsRepository>(
-    app_state: Data<AppState<AR, TR>>,
+pub async fn create_account<AR: AccountsRepository>(
+    accounts_repo: Data<AR>,
     path: Path<i32>,
     payload: web::Json<NewAccountRest>,
 ) -> Result<HttpResponse, actix_web::Error> {
@@ -35,7 +32,7 @@ pub async fn create_account<AR: AccountsRepository, TR: TransactionsRepository>(
         new_account.account_type, customer_id
     );
 
-    let account = web::block(move || app_state.accounts_repo.create_account(new_account))
+    let account = web::block(move || accounts_repo.create_account(new_account))
         .await
         .map_err(|_| ApiError::InternalError)?
         .map_err(|_| ApiError::InternalError)?;
@@ -45,8 +42,8 @@ pub async fn create_account<AR: AccountsRepository, TR: TransactionsRepository>(
         .json(web::Json::<AccountRest>(account.into())))
 }
 
-pub async fn find_accounts<AR: AccountsRepository, TR: TransactionsRepository>(
-    app_state: Data<AppState<AR, TR>>,
+pub async fn find_accounts<AR: AccountsRepository>(
+    accounts_repo: Data<AR>,
     path: Path<i32>,
     query: Query<FindAccountQueryRest>,
 ) -> Result<HttpResponse, actix_web::Error> {
@@ -64,7 +61,7 @@ pub async fn find_accounts<AR: AccountsRepository, TR: TransactionsRepository>(
 
     println!("Trying to get accounts for customer {}", customer_id);
 
-    let accounts = web::block(move || app_state.accounts_repo.find_accounts(query))
+    let accounts = web::block(move || accounts_repo.find_accounts(query))
         .await
         .map_err(|_| ApiError::InternalError)?
         .map_err(|_| ApiError::InternalError)?;
@@ -83,8 +80,8 @@ pub async fn find_accounts<AR: AccountsRepository, TR: TransactionsRepository>(
         .json(web::Json::<AccountsRest>(accounts.into())))
 }
 
-pub async fn get_account<AR: AccountsRepository, TR: TransactionsRepository>(
-    app_state: Data<AppState<AR, TR>>,
+pub async fn get_account<AR: AccountsRepository>(
+    accounts_repo: Data<AR>,
     path: Path<(i32, i32)>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let (customer_id, account_id) = path.into_inner();
@@ -94,7 +91,7 @@ pub async fn get_account<AR: AccountsRepository, TR: TransactionsRepository>(
         account_id, customer_id
     );
 
-    let account = web::block(move || app_state.accounts_repo.get_account(account_id))
+    let account = web::block(move || accounts_repo.get_account(account_id))
         .await
         .map_err(|_| ApiError::InternalError)?
         .map_err(|err| match err {
@@ -111,8 +108,8 @@ pub async fn get_account<AR: AccountsRepository, TR: TransactionsRepository>(
         .json(web::Json::<AccountRest>(account.into())))
 }
 
-pub async fn delete_account<AR: AccountsRepository, TR: TransactionsRepository>(
-    app_state: Data<AppState<AR, TR>>,
+pub async fn delete_account<AR: AccountsRepository>(
+    accounts_repo: Data<AR>,
     path: Path<(i32, i32)>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let (customer_id, account_id) = path.into_inner();
@@ -123,7 +120,7 @@ pub async fn delete_account<AR: AccountsRepository, TR: TransactionsRepository>(
     );
 
     web::block(move || {
-        let get_acc_res = app_state.accounts_repo.get_account(account_id);
+        let get_acc_res = accounts_repo.get_account(account_id);
 
         let check_account_error: Option<ApiError> = match get_acc_res {
             Ok(acc) => {
@@ -142,8 +139,7 @@ pub async fn delete_account<AR: AccountsRepository, TR: TransactionsRepository>(
             return Err(cc);
         }
 
-        app_state
-            .accounts_repo
+        accounts_repo
             .delete_account(account_id)
             .map_err(|_| ApiError::InternalError)
     })
@@ -169,11 +165,8 @@ mod tests {
             error::ApiError,
         },
         error::RepoError,
-        models::{
-            account::{Account, AccountStatus, AccountType, FindAccountQuery, NewAccount},
-            AppState,
-        },
-        traits::{MockAccountsRepository, MockTransactionsRepository},
+        models::account::{Account, AccountStatus, AccountType, FindAccountQuery, NewAccount},
+        traits::MockAccountsRepository,
     };
 
     use actix_web::{
@@ -185,18 +178,6 @@ mod tests {
     };
     use chrono::{NaiveDate, NaiveDateTime};
     use mockall::{predicate::eq, Sequence};
-
-    impl AppState<MockAccountsRepository, MockTransactionsRepository> {
-        pub fn new(
-            accounts_repo: MockAccountsRepository,
-            transactions_repo: MockTransactionsRepository,
-        ) -> Self {
-            Self {
-                accounts_repo,
-                transactions_repo,
-            }
-        }
-    }
 
     #[actix_web::test]
     async fn test_create_account_success() {
@@ -233,21 +214,11 @@ mod tests {
                     bsb: 123456,
                 })
             });
-        let mock_transactions_repo = MockTransactionsRepository::new();
-
-        let mock_app_state_data = Data::new(AppState::<
-            MockAccountsRepository,
-            MockTransactionsRepository,
-        >::new(
-            mock_accounts_repo, mock_transactions_repo
-        ));
 
         let mut app = test::init_service(
-            App::new().app_data(mock_app_state_data).service(
-                web::resource("/customers/{customer_id}/accounts").route(
-                    web::post()
-                        .to(create_account::<MockAccountsRepository, MockTransactionsRepository>),
-                ),
+            App::new().app_data(Data::new(mock_accounts_repo)).service(
+                web::resource("/customers/{customer_id}/accounts")
+                    .route(web::post().to(create_account::<MockAccountsRepository>)),
             ),
         )
         .await;
@@ -306,17 +277,9 @@ mod tests {
             .with(eq(new_account))
             .times(1)
             .returning(move |_| Err(RepoError::Other));
-        let mock_transactions_repo = MockTransactionsRepository::new();
-
-        let mock_app_state_data = Data::new(AppState::<
-            MockAccountsRepository,
-            MockTransactionsRepository,
-        >::new(
-            mock_accounts_repo, mock_transactions_repo
-        ));
 
         let res = create_account(
-            mock_app_state_data,
+            Data::new(mock_accounts_repo),
             customer_id.into(),
             Json(NewAccountRest {
                 customer_id,
@@ -380,20 +343,13 @@ mod tests {
                     },
                 ])
             });
-        let mock_transactions_repo = MockTransactionsRepository::new();
 
-        let mock_app_state_data = Data::new(AppState::<
-            MockAccountsRepository,
-            MockTransactionsRepository,
-        >::new(
-            mock_accounts_repo, mock_transactions_repo
-        ));
-
-        let mut app = test::init_service(App::new().app_data(mock_app_state_data).service(
-            web::resource("/customers/{customer_id}/accounts").route(
-                web::get().to(find_accounts::<MockAccountsRepository, MockTransactionsRepository>),
+        let mut app = test::init_service(
+            App::new().app_data(Data::new(mock_accounts_repo)).service(
+                web::resource("/customers/{customer_id}/accounts")
+                    .route(web::get().to(find_accounts::<MockAccountsRepository>)),
             ),
-        ))
+        )
         .await;
 
         let resp = test::TestRequest::get()
@@ -455,20 +411,13 @@ mod tests {
             .with(eq(expected_query))
             .times(1)
             .returning(move |_| Err(RepoError::Other));
-        let mock_transactions_repo = MockTransactionsRepository::new();
 
-        let mock_app_state_data = Data::new(AppState::<
-            MockAccountsRepository,
-            MockTransactionsRepository,
-        >::new(
-            mock_accounts_repo, mock_transactions_repo
-        ));
-
-        let mut app = test::init_service(App::new().app_data(mock_app_state_data).service(
-            web::resource("/customers/{customer_id}/accounts").route(
-                web::get().to(find_accounts::<MockAccountsRepository, MockTransactionsRepository>),
+        let mut app = test::init_service(
+            App::new().app_data(Data::new(mock_accounts_repo)).service(
+                web::resource("/customers/{customer_id}/accounts")
+                    .route(web::get().to(find_accounts::<MockAccountsRepository>)),
             ),
-        ))
+        )
         .await;
 
         let resp = test::TestRequest::get()
@@ -508,18 +457,13 @@ mod tests {
                     bsb: 123456,
                 })
             });
-        let mock_transactions_repo = MockTransactionsRepository::new();
 
-        let mock_app_state_data = Data::new(AppState::<
-            MockAccountsRepository,
-            MockTransactionsRepository,
-        >::new(
-            mock_accounts_repo, mock_transactions_repo
-        ));
-
-        let res = get_account(mock_app_state_data, (customer_id, account_id).into())
-            .await
-            .unwrap();
+        let res = get_account(
+            Data::new(mock_accounts_repo),
+            (customer_id, account_id).into(),
+        )
+        .await
+        .unwrap();
 
         let actual_status = res.status();
         let actual_body = to_bytes(res.into_body()).await.unwrap();
@@ -554,16 +498,12 @@ mod tests {
             .with(eq(account_id))
             .times(1)
             .returning(move |_| Err(RepoError::Other));
-        let mock_transactions_repo = MockTransactionsRepository::new();
 
-        let mock_app_state_data = Data::new(AppState::<
-            MockAccountsRepository,
-            MockTransactionsRepository,
-        >::new(
-            mock_accounts_repo, mock_transactions_repo
-        ));
-
-        let res = get_account(mock_app_state_data, (customer_id, account_id).into()).await;
+        let res = get_account(
+            Data::new(mock_accounts_repo),
+            (customer_id, account_id).into(),
+        )
+        .await;
 
         assert!(res.is_err_and(|e| { e.to_string() == ApiError::InternalError.to_string() }));
     }
@@ -579,16 +519,12 @@ mod tests {
             .with(eq(account_id))
             .times(1)
             .returning(move |_| Err(RepoError::NotFound));
-        let mock_transactions_repo = MockTransactionsRepository::new();
 
-        let mock_app_state_data = Data::new(AppState::<
-            MockAccountsRepository,
-            MockTransactionsRepository,
-        >::new(
-            mock_accounts_repo, mock_transactions_repo
-        ));
-
-        let res = get_account(mock_app_state_data, (customer_id, account_id).into()).await;
+        let res = get_account(
+            Data::new(mock_accounts_repo),
+            (customer_id, account_id).into(),
+        )
+        .await;
 
         assert!(res.is_err_and(|e| { e.to_string() == ApiError::NotFound.to_string() }));
     }
@@ -621,16 +557,12 @@ mod tests {
                     bsb: 123456,
                 })
             });
-        let mock_transactions_repo = MockTransactionsRepository::new();
 
-        let mock_app_state_data = Data::new(AppState::<
-            MockAccountsRepository,
-            MockTransactionsRepository,
-        >::new(
-            mock_accounts_repo, mock_transactions_repo
-        ));
-
-        let res = get_account(mock_app_state_data, (wrong_customer_id, account_id).into()).await;
+        let res = get_account(
+            Data::new(mock_accounts_repo),
+            (wrong_customer_id, account_id).into(),
+        )
+        .await;
 
         assert!(res.is_err_and(|e| { e.to_string() == ApiError::Unauthorized.to_string() }));
     }
@@ -673,18 +605,13 @@ mod tests {
             .times(1)
             .returning(|_| Ok(()))
             .in_sequence(&mut seq);
-        let mock_transactions_repo = MockTransactionsRepository::new();
 
-        let mock_app_state_data = Data::new(AppState::<
-            MockAccountsRepository,
-            MockTransactionsRepository,
-        >::new(
-            mock_accounts_repo, mock_transactions_repo
-        ));
-
-        let res = delete_account(mock_app_state_data, (customer_id, account_id).into())
-            .await
-            .unwrap();
+        let res = delete_account(
+            Data::new(mock_accounts_repo),
+            (customer_id, account_id).into(),
+        )
+        .await
+        .unwrap();
 
         let actual_status = res.status();
         let actual_body = to_bytes(res.into_body()).await.unwrap();
@@ -718,18 +645,12 @@ mod tests {
             .returning(|_| Ok(()))
             .in_sequence(&mut seq);
 
-        let mock_transactions_repo = MockTransactionsRepository::new();
-
-        let mock_app_state_data = Data::new(AppState::<
-            MockAccountsRepository,
-            MockTransactionsRepository,
-        >::new(
-            mock_accounts_repo, mock_transactions_repo
-        ));
-
-        let res = delete_account(mock_app_state_data, (customer_id, account_id).into())
-            .await
-            .unwrap();
+        let res = delete_account(
+            Data::new(mock_accounts_repo),
+            (customer_id, account_id).into(),
+        )
+        .await
+        .unwrap();
 
         let actual_status = res.status();
         let actual_body = to_bytes(res.into_body()).await.unwrap();
@@ -768,16 +689,12 @@ mod tests {
                     bsb: 123456,
                 })
             });
-        let mock_transactions_repo = MockTransactionsRepository::new();
 
-        let mock_app_state_data = Data::new(AppState::<
-            MockAccountsRepository,
-            MockTransactionsRepository,
-        >::new(
-            mock_accounts_repo, mock_transactions_repo
-        ));
-
-        let res = delete_account(mock_app_state_data, (wrong_customer_id, account_id).into()).await;
+        let res = delete_account(
+            Data::new(mock_accounts_repo),
+            (wrong_customer_id, account_id).into(),
+        )
+        .await;
 
         assert!(res.is_err_and(|e| { e.to_string() == ApiError::Unauthorized.to_string() }));
     }
@@ -793,16 +710,11 @@ mod tests {
             .times(1)
             .returning(move |_| Err(RepoError::Other));
 
-        let mock_transactions_repo = MockTransactionsRepository::new();
-
-        let mock_app_state_data = Data::new(AppState::<
-            MockAccountsRepository,
-            MockTransactionsRepository,
-        >::new(
-            mock_accounts_repo, mock_transactions_repo
-        ));
-
-        let res = delete_account(mock_app_state_data, (customer_id, account_id).into()).await;
+        let res = delete_account(
+            Data::new(mock_accounts_repo),
+            (customer_id, account_id).into(),
+        )
+        .await;
 
         assert!(res.is_err_and(|e| { e.to_string() == ApiError::InternalError.to_string() }));
     }

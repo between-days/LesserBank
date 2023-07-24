@@ -16,7 +16,7 @@ pub fn configure_transactions_api<AR: AccountsRepository, TR: TransactionsReposi
         web::scope("/api/customers/{customer_id}/transactions").service(
             web::resource("")
                 .route(web::post().to(transactions::handlers::new_internal_transaction::<AR, TR>))
-                .route(web::get().to(transactions::handlers::find_transactions::<AR, TR>)),
+                .route(web::get().to(transactions::handlers::find_transactions::<TR>)),
         ),
     );
 }

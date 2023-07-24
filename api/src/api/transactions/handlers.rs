@@ -7,11 +7,11 @@ use crate::api::error::ApiError;
 use crate::api::transactions::models::{TransactionRest, TransactionsRest};
 use crate::models::account::FindAccountQuery;
 use crate::models::transaction::{FindTransactionQuery, NewTransaction};
-use crate::models::AppState;
 use crate::traits::{AccountsRepository, TransactionsRepository};
 
 pub async fn new_internal_transaction<AR: AccountsRepository, TR: TransactionsRepository>(
-    app_state: Data<AppState<AR, TR>>,
+    accounts_repo: Data<AR>,
+    transactions_repo: Data<TR>,
     path: Path<i32>,
     payload: web::Json<NewInternalTransactionRest>,
 ) -> Result<HttpResponse, actix_web::Error> {
@@ -35,9 +35,9 @@ pub async fn new_internal_transaction<AR: AccountsRepository, TR: TransactionsRe
     );
 
     // TODO: !! BLOCKING !!
-    let accounts = app_state
-        .accounts_repo
-        .find_accounts(account_query.clone())
+    let accounts = web::block(move || accounts_repo.find_accounts(account_query))
+        .await
+        .map_err(|_| ApiError::InternalError)?
         .map_err(|_| ApiError::BadRequest)?;
 
     if accounts.len() > 1 {
@@ -45,7 +45,7 @@ pub async fn new_internal_transaction<AR: AccountsRepository, TR: TransactionsRe
     } else if accounts.len() != 1 {
         println!(
             "Couldn't find related account {:?} for customer {}",
-            account_query.account_number, customer_id
+            new_transaction.from_number, customer_id
         );
         return Err(ApiError::BadRequest.into());
     }
@@ -58,6 +58,7 @@ pub async fn new_internal_transaction<AR: AccountsRepository, TR: TransactionsRe
     }
     new_transaction.available_balance_cents =
         account_from.available_balance_cents - new_transaction.amount_cents;
+    new_transaction.from_name = account_from.name.clone();
 
     println!(
         "Trying to create {:?} transaction for customer {}",
@@ -65,9 +66,9 @@ pub async fn new_internal_transaction<AR: AccountsRepository, TR: TransactionsRe
     );
 
     // TODO: !! BLOCKING !!
-    let transaction = app_state
-        .transactions_repo
-        .create_transaction(new_transaction)
+    let transaction = web::block(move || transactions_repo.create_transaction(new_transaction))
+        .await
+        .map_err(|_| ApiError::InternalError)?
         .map_err(|_| ApiError::InternalError)?;
 
     // TODO: put job in queue to call handler /webhook/transaction/execute-transaction
@@ -78,8 +79,8 @@ pub async fn new_internal_transaction<AR: AccountsRepository, TR: TransactionsRe
         .json(web::Json::<TransactionRest>(transaction.into())))
 }
 
-pub async fn find_transactions<AR: AccountsRepository, TR: TransactionsRepository>(
-    app_state: Data<AppState<AR, TR>>,
+pub async fn find_transactions<TR: TransactionsRepository>(
+    transactions_repo: Data<TR>,
     path: Path<i32>,
     query: Query<FindTransactionQueryRest>,
 ) -> Result<HttpResponse, actix_web::Error> {
@@ -97,7 +98,7 @@ pub async fn find_transactions<AR: AccountsRepository, TR: TransactionsRepositor
 
     println!("Trying to get transactions for customer {}", customer_id);
 
-    let transactions = web::block(move || app_state.transactions_repo.find_transactions(query))
+    let transactions = web::block(move || transactions_repo.find_transactions(query))
         .await
         .map_err(|_| ApiError::InternalError)?
         .map_err(|_| ApiError::InternalError)?;
