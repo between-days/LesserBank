@@ -8,7 +8,7 @@ import { AccountBalancesInfoCard } from "@/components/account/AccountBalancesInf
 import { useOneAccount } from "@/services/AccountsService";
 import { InternalErrorContent } from "@/components/shared/error/InternalErrorContent";
 import { useTransactions } from "@/services/TransactionsService";
-import { IconArrowBarToRight } from "@tabler/icons-react";
+import TransactionItemAlt, { getPropsFromTransaction } from "@/components/transaction/TransactionItemAlt";
 
 export const getServerSideProps = async (context: { query: { slug: any; }; }) => {
     let { slug } = context.query;
@@ -61,20 +61,27 @@ export default function AccountDetail(props: { slug: any; }) {
     if (accountsError) return <InternalErrorContent />
     if (transactionsError) return <InternalErrorContent />
 
-    const transactionsContent = accountNumber && transactions
-        ? <div>
+    let transactionsContent: any
+    if (accountNumber && transactions) {
+        transactionsContent = <div>
             {transactions.length > 0 && <>
                 <Title order={2}>Transactions</Title>
                 <Space mb="md" />
             </>}
 
-            {transactions.map((transaction, i) =>
-                <div key={i}>
-                    <TransactionItem {...transaction} />
+            {transactions.map((transaction, i) => {
+                let trItemProps = getPropsFromTransaction(transaction, accountNumber)
+
+                return <div key={i}>
+                    <TransactionItemAlt {...trItemProps} />
                     <Space h="md" />
-                </div>)}
+                </div>
+            })
+            }
         </div>
-        : <>Loading...</>
+    } else {
+        transactionsContent = <>Loading...</>
+    }
 
     if (!accountNumber || !account) return <AccountDetailsLoadingContent>
         {transactionsContent}
