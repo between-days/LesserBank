@@ -44,9 +44,9 @@ export default function Dashboard() {
             <Title order={2}>Accounts</Title>
         }>
             <DashboardAffixes />
-            <Grid gutter="xl">
+            <Grid gutter="xl" align='center'>
                 {accounts.map((account, i) =>
-                    <Grid.Col md={4} key={i}>
+                    <Grid.Col xs={8} sm={6} md={4} key={i}>
                         <AccountCard {...{ ...account, onHover: true }} />
                     </Grid.Col>
                 )}

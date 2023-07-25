@@ -34,10 +34,20 @@ export default function AccountCard({ name, accountType, balanceCents, accountNu
     }
 
     return (
-        <Card ref={ref} shadow={shadow} radius="lg" withBorder={withBorder}>
+        <Card ref={ref} shadow={shadow} radius="lg" withBorder={withBorder} maw="20rem">
+            <Card.Section >
+                <Center
+                    sx={(theme) => ({
+                        height: '0.5rem',
+                        backgroundImage: theme.fn.gradient({ from: 'red', to: 'orange', deg: 45 }),
+                        color: theme.white,
+                    })}
+                >
+                </Center>
+            </Card.Section>
             <Stack spacing="xl">
                 <Group position='apart' mt='lg'>
-                    <Group position='left' noWrap>
+                    <Group position='left'>
                         {getIconForAccountType(accountType)}
                         <Stack spacing={0}>
                             <Text weight={500} fz="lg">{name}</Text>

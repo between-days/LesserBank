@@ -1,5 +1,5 @@
 import TransactionItem from "@/components/transaction/TransactionItem";
-import { Box, Button, Card, Center, Container, Grid, Group, Paper, Skeleton, Space, Stack, Title, useMantineTheme, } from "@mantine/core";
+import { Grid, Group, Skeleton, Space, Stack, Title, useMantineTheme, } from "@mantine/core";
 import React from 'react';
 import CustomPage from "@/components/shared/CustomPage";
 import { AccountNumberAndTypeInfoPaper } from "@/components/account/AccountNumberAndTypeInfoPaper";
@@ -84,18 +84,18 @@ export default function AccountDetail(props: { slug: any; }) {
 
     return (
         <CustomPage title={
-            <Group>
+            <Group align="flex-start">
                 <Title order={2}>Account Details for</Title>
                 <Title order={2} color={theme.primaryColor} italic>
                     {name ? name : accountNumber}
                 </Title>
             </Group>
         }>
-            <Grid miw="50rem">
-                <Grid.Col xs={3}>
+            <Grid align="center">
+                <Grid.Col xs={12} sm={4}>
                     <AccountBalancesInfoCard availableBalanceCents={availableBalanceCents} balanceCents={balanceCents} />
                 </Grid.Col>
-                <Grid.Col xs={4}>
+                <Grid.Col xs={12} sm={4}>
                     <Stack align="stretch" justify="center">
                         <AccountNumberAndTypeInfoPaper accountNumber={accountNumber} accountType={accountType} bsb={bsb} />
                         <AccountOpenedInfoPaper dateOpened={dateOpened} />
@@ -108,10 +108,11 @@ export default function AccountDetail(props: { slug: any; }) {
                         </Center>
                     </Card>
                 </Grid.Col> */}
-                <Grid.Col xs={12}>
+                <Grid.Col xs={12} sm={8}>
                     {transactionsContent}
                 </Grid.Col>
             </Grid>
+
         </CustomPage>
     )
 }

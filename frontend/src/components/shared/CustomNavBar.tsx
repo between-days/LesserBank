@@ -1,4 +1,4 @@
-import { Navbar, Space, Group, Stack, NavLink, Text, Avatar } from '@mantine/core';
+import { Space, Group, Stack, NavLink, Text, Avatar } from '@mantine/core';
 import {
     IconActivity,
     IconHome2,
@@ -42,19 +42,15 @@ export function CustomNavBar() {
     ));
 
     return (
-        <Navbar width={{ sm: 250 }}>
-            <Navbar.Section grow >
-                <Stack mt="0.5rem" >
-                    <Group align='center' p="md">
-                        <Avatar src="bingus.jpg" alt="uh oh" radius="xl" size="lg" />
-                        <Text fw={250} fz="lg">
-                            Welcome, Bingus
-                        </Text>
-                    </Group>
-                    <Space h="xl" />
-                    {items}
-                </Stack>
-            </Navbar.Section>
-        </Navbar>
+        <Stack bg="white">
+            <Group align='center' p="md">
+                <Avatar src="bingus.jpg" alt="uh oh" radius="xl" size="lg" />
+                <Text fw={250} fz="lg">
+                    Welcome, Bingus
+                </Text>
+            </Group>
+            <Space h="xl" />
+            {items}
+        </Stack>
     );
 }
