@@ -34,7 +34,6 @@ pub async fn new_internal_transaction<AR: AccountsRepository, TR: TransactionsRe
         account_query.account_number, customer_id
     );
 
-    // TODO: !! BLOCKING !!
     let accounts = web::block(move || accounts_repo.find_accounts(account_query))
         .await
         .map_err(|_| ApiError::InternalError)?
@@ -65,7 +64,6 @@ pub async fn new_internal_transaction<AR: AccountsRepository, TR: TransactionsRe
         new_transaction.transaction_type, customer_id
     );
 
-    // TODO: !! BLOCKING !!
     let transaction = web::block(move || transactions_repo.create_transaction(new_transaction))
         .await
         .map_err(|_| ApiError::InternalError)?
