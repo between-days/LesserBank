@@ -6,12 +6,18 @@ use actix_web::web;
 
 use crate::{
     api::transactions,
-    traits::{AccountsRepository, TransactionsRepository},
+    models::{
+        account::{Account, FindAccountQuery},
+        transaction::{FindTransactionQuery, NewTransaction, Transaction},
+    },
+    traits::{RepoCreate, RepoFind},
 };
 
-pub fn configure_transactions_api<AR: AccountsRepository, TR: TransactionsRepository>(
-    cfg: &mut web::ServiceConfig,
-) {
+pub fn configure_transactions_api<AR, TR>(cfg: &mut web::ServiceConfig)
+where
+    AR: RepoFind<Account, FindAccountQuery>,
+    TR: RepoCreate<Transaction, NewTransaction> + RepoFind<Transaction, FindTransactionQuery>,
+{
     cfg.service(
         web::scope("/api/customers/{customer_id}/transactions").service(
             web::resource("")

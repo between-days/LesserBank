@@ -5,9 +5,19 @@ pub mod util;
 
 use actix_web::web;
 
-use crate::{api::accounts, traits::AccountsRepository};
+use crate::{
+    api::accounts,
+    models::account::{Account, FindAccountQuery, NewAccount},
+    traits::{RepoCreate, RepoDeleteById, RepoFind, RepoGetById},
+};
 
-pub fn configure_accounts_api<AR: AccountsRepository>(cfg: &mut web::ServiceConfig) {
+pub fn configure_accounts_api<AR>(cfg: &mut web::ServiceConfig)
+where
+    AR: RepoCreate<Account, NewAccount>
+        + RepoFind<Account, FindAccountQuery>
+        + RepoGetById<Account>
+        + RepoDeleteById<Account>,
+{
     cfg.service(
         web::scope("/api/customers/{customer_id}/accounts")
             .service(

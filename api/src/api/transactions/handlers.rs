@@ -5,16 +5,20 @@ use actix_web::{web, HttpResponse};
 use super::models::{FindTransactionQueryRest, NewInternalTransactionRest};
 use crate::api::error::ApiError;
 use crate::api::transactions::models::{TransactionRest, TransactionsRest};
-use crate::models::account::FindAccountQuery;
-use crate::models::transaction::{FindTransactionQuery, NewTransaction};
-use crate::traits::{AccountsRepository, TransactionsRepository};
+use crate::models::account::{Account, FindAccountQuery};
+use crate::models::transaction::{FindTransactionQuery, NewTransaction, Transaction};
+use crate::traits::{RepoCreate, RepoFind};
 
-pub async fn new_internal_transaction<AR: AccountsRepository, TR: TransactionsRepository>(
+pub async fn new_internal_transaction<AR, TR>(
     accounts_repo: Data<AR>,
     transactions_repo: Data<TR>,
     path: Path<i32>,
     payload: web::Json<NewInternalTransactionRest>,
-) -> Result<HttpResponse, actix_web::Error> {
+) -> Result<HttpResponse, actix_web::Error>
+where
+    AR: RepoFind<Account, FindAccountQuery>,
+    TR: RepoCreate<Transaction, NewTransaction>,
+{
     let customer_id = path.into_inner();
 
     let mut new_transaction: NewTransaction = payload.into_inner().into();
@@ -34,7 +38,7 @@ pub async fn new_internal_transaction<AR: AccountsRepository, TR: TransactionsRe
         account_query.account_number, customer_id
     );
 
-    let accounts = web::block(move || accounts_repo.find_accounts(account_query))
+    let accounts = web::block(move || accounts_repo.find(account_query))
         .await
         .map_err(|_| ApiError::InternalError)?
         .map_err(|_| ApiError::BadRequest)?;
@@ -64,7 +68,7 @@ pub async fn new_internal_transaction<AR: AccountsRepository, TR: TransactionsRe
         new_transaction.transaction_type, customer_id
     );
 
-    let transaction = web::block(move || transactions_repo.create_transaction(new_transaction))
+    let transaction = web::block(move || transactions_repo.create(new_transaction))
         .await
         .map_err(|_| ApiError::InternalError)?
         .map_err(|_| ApiError::InternalError)?;
@@ -77,11 +81,14 @@ pub async fn new_internal_transaction<AR: AccountsRepository, TR: TransactionsRe
         .json(web::Json::<TransactionRest>(transaction.into())))
 }
 
-pub async fn find_transactions<TR: TransactionsRepository>(
+pub async fn find_transactions<TR>(
     transactions_repo: Data<TR>,
     path: Path<i32>,
     query: Query<FindTransactionQueryRest>,
-) -> Result<HttpResponse, actix_web::Error> {
+) -> Result<HttpResponse, actix_web::Error>
+where
+    TR: RepoFind<Transaction, FindTransactionQuery>,
+{
     let customer_id = path.into_inner();
 
     let query = FindTransactionQuery {
@@ -96,7 +103,7 @@ pub async fn find_transactions<TR: TransactionsRepository>(
 
     println!("Trying to get transactions for customer {}", customer_id);
 
-    let transactions = web::block(move || transactions_repo.find_transactions(query))
+    let transactions = web::block(move || transactions_repo.find(query))
         .await
         .map_err(|_| ApiError::InternalError)?
         .map_err(|_| ApiError::InternalError)?;

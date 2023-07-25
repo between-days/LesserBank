@@ -7,14 +7,17 @@ use super::models::{AccountRest, AccountsRest, FindAccountQueryRest, NewAccountR
 use crate::api::accounts::util::get_random_account_number;
 use crate::api::error::ApiError;
 use crate::error::RepoError;
-use crate::models::account::{FindAccountQuery, NewAccount};
-use crate::traits::AccountsRepository;
+use crate::models::account::{Account, FindAccountQuery, NewAccount};
+use crate::traits::{RepoCreate, RepoDeleteById, RepoFind, RepoGetById};
 
-pub async fn create_account<AR: AccountsRepository>(
+pub async fn create_account<AR>(
     accounts_repo: Data<AR>,
     path: Path<i32>,
     payload: web::Json<NewAccountRest>,
-) -> Result<HttpResponse, actix_web::Error> {
+) -> Result<HttpResponse, actix_web::Error>
+where
+    AR: RepoCreate<Account, NewAccount>,
+{
     let customer_id = path.into_inner();
 
     let mut new_account: NewAccount = payload.into_inner().into();
@@ -32,7 +35,7 @@ pub async fn create_account<AR: AccountsRepository>(
         new_account.account_type, customer_id
     );
 
-    let account = web::block(move || accounts_repo.create_account(new_account))
+    let account = web::block(move || accounts_repo.create(new_account))
         .await
         .map_err(|_| ApiError::InternalError)?
         .map_err(|_| ApiError::InternalError)?;
@@ -42,11 +45,14 @@ pub async fn create_account<AR: AccountsRepository>(
         .json(web::Json::<AccountRest>(account.into())))
 }
 
-pub async fn find_accounts<AR: AccountsRepository>(
+pub async fn find_accounts<AR>(
     accounts_repo: Data<AR>,
     path: Path<i32>,
     query: Query<FindAccountQueryRest>,
-) -> Result<HttpResponse, actix_web::Error> {
+) -> Result<HttpResponse, actix_web::Error>
+where
+    AR: RepoFind<Account, FindAccountQuery>,
+{
     let customer_id = path.into_inner();
 
     let query = FindAccountQuery {
@@ -61,7 +67,7 @@ pub async fn find_accounts<AR: AccountsRepository>(
 
     println!("Trying to get accounts for customer {}", customer_id);
 
-    let accounts = web::block(move || accounts_repo.find_accounts(query))
+    let accounts = web::block(move || accounts_repo.find(query))
         .await
         .map_err(|_| ApiError::InternalError)?
         .map_err(|_| ApiError::InternalError)?;
@@ -80,10 +86,13 @@ pub async fn find_accounts<AR: AccountsRepository>(
         .json(web::Json::<AccountsRest>(accounts.into())))
 }
 
-pub async fn get_account<AR: AccountsRepository>(
+pub async fn get_account<AR>(
     accounts_repo: Data<AR>,
     path: Path<(i32, i32)>,
-) -> Result<HttpResponse, actix_web::Error> {
+) -> Result<HttpResponse, actix_web::Error>
+where
+    AR: RepoGetById<Account>,
+{
     let (customer_id, account_id) = path.into_inner();
 
     println!(
@@ -91,7 +100,7 @@ pub async fn get_account<AR: AccountsRepository>(
         account_id, customer_id
     );
 
-    let account = web::block(move || accounts_repo.get_account(account_id))
+    let account = web::block(move || accounts_repo.get_by_id(account_id))
         .await
         .map_err(|_| ApiError::InternalError)?
         .map_err(|err| match err {
@@ -108,10 +117,13 @@ pub async fn get_account<AR: AccountsRepository>(
         .json(web::Json::<AccountRest>(account.into())))
 }
 
-pub async fn delete_account<AR: AccountsRepository>(
+pub async fn delete_account<AR>(
     accounts_repo: Data<AR>,
     path: Path<(i32, i32)>,
-) -> Result<HttpResponse, actix_web::Error> {
+) -> Result<HttpResponse, actix_web::Error>
+where
+    AR: RepoGetById<Account> + RepoDeleteById<Account>,
+{
     let (customer_id, account_id) = path.into_inner();
 
     println!(
@@ -120,7 +132,7 @@ pub async fn delete_account<AR: AccountsRepository>(
     );
 
     web::block(move || {
-        let get_acc_res = accounts_repo.get_account(account_id);
+        let get_acc_res = accounts_repo.get_by_id(account_id);
 
         let check_account_error: Option<ApiError> = match get_acc_res {
             Ok(acc) => {
@@ -140,7 +152,7 @@ pub async fn delete_account<AR: AccountsRepository>(
         }
 
         accounts_repo
-            .delete_account(account_id)
+            .delete_by_id(account_id)
             .map_err(|_| ApiError::InternalError)
     })
     .await
@@ -166,7 +178,7 @@ mod tests {
         },
         error::RepoError,
         models::account::{Account, AccountStatus, AccountType, FindAccountQuery, NewAccount},
-        traits::MockAccountsRepository,
+        traits::{MockRepoCreate, MockRepoFind, MockRepoGetById, RepoDeleteById, RepoGetById},
     };
 
     use actix_web::{
@@ -177,7 +189,7 @@ mod tests {
         App,
     };
     use chrono::{NaiveDate, NaiveDateTime};
-    use mockall::{predicate::eq, Sequence};
+    use mockall::{mock, predicate::eq, Sequence};
 
     #[actix_web::test]
     async fn test_create_account_success() {
@@ -189,9 +201,9 @@ mod tests {
             .and_hms_opt(9, 10, 11)
             .unwrap();
 
-        let mut mock_accounts_repo = MockAccountsRepository::new();
+        let mut mock_accounts_repo = MockRepoCreate::<Account, NewAccount>::new();
         mock_accounts_repo
-            .expect_create_account()
+            .expect_create()
             .withf(move |acc| {
                 acc.customer_id == customer_id
                     && acc.balance_cents == 34343
@@ -218,7 +230,7 @@ mod tests {
         let mut app = test::init_service(
             App::new().app_data(Data::new(mock_accounts_repo)).service(
                 web::resource("/customers/{customer_id}/accounts")
-                    .route(web::post().to(create_account::<MockAccountsRepository>)),
+                    .route(web::post().to(create_account::<MockRepoCreate<Account, NewAccount>>)),
             ),
         )
         .await;
@@ -271,9 +283,9 @@ mod tests {
             account_number: "".to_string(),
         };
 
-        let mut mock_accounts_repo = MockAccountsRepository::new();
+        let mut mock_accounts_repo = MockRepoCreate::<Account, NewAccount>::new();
         mock_accounts_repo
-            .expect_create_account()
+            .expect_create()
             .with(eq(new_account))
             .times(1)
             .returning(move |_| Err(RepoError::Other));
@@ -304,9 +316,9 @@ mod tests {
             account_number: None,
         };
 
-        let mut mock_accounts_repo = MockAccountsRepository::new();
+        let mut mock_accounts_repo = MockRepoFind::<Account, FindAccountQuery>::new();
         mock_accounts_repo
-            .expect_find_accounts()
+            .expect_find()
             .with(eq(expected_query))
             .times(1)
             .returning(move |_| {
@@ -345,10 +357,11 @@ mod tests {
             });
 
         let mut app = test::init_service(
-            App::new().app_data(Data::new(mock_accounts_repo)).service(
-                web::resource("/customers/{customer_id}/accounts")
-                    .route(web::get().to(find_accounts::<MockAccountsRepository>)),
-            ),
+            App::new()
+                .app_data(Data::new(mock_accounts_repo))
+                .service(web::resource("/customers/{customer_id}/accounts").route(
+                    web::get().to(find_accounts::<MockRepoFind<Account, FindAccountQuery>>),
+                )),
         )
         .await;
 
@@ -405,18 +418,19 @@ mod tests {
             account_number: None,
         };
 
-        let mut mock_accounts_repo = MockAccountsRepository::new();
+        let mut mock_accounts_repo = MockRepoFind::<Account, FindAccountQuery>::new();
         mock_accounts_repo
-            .expect_find_accounts()
+            .expect_find()
             .with(eq(expected_query))
             .times(1)
             .returning(move |_| Err(RepoError::Other));
 
         let mut app = test::init_service(
-            App::new().app_data(Data::new(mock_accounts_repo)).service(
-                web::resource("/customers/{customer_id}/accounts")
-                    .route(web::get().to(find_accounts::<MockAccountsRepository>)),
-            ),
+            App::new()
+                .app_data(Data::new(mock_accounts_repo))
+                .service(web::resource("/customers/{customer_id}/accounts").route(
+                    web::get().to(find_accounts::<MockRepoFind<Account, FindAccountQuery>>),
+                )),
         )
         .await;
 
@@ -435,9 +449,9 @@ mod tests {
         let customer_id = 1;
         let account_id = 2;
 
-        let mut mock_accounts_repo = MockAccountsRepository::new();
+        let mut mock_accounts_repo = MockRepoGetById::<Account>::new();
         mock_accounts_repo
-            .expect_get_account()
+            .expect_get_by_id()
             .with(eq(account_id))
             .times(1)
             .returning(move |_| {
@@ -492,9 +506,9 @@ mod tests {
         let customer_id = 1;
         let account_id = 4;
 
-        let mut mock_accounts_repo = MockAccountsRepository::new();
+        let mut mock_accounts_repo = MockRepoGetById::<Account>::new();
         mock_accounts_repo
-            .expect_get_account()
+            .expect_get_by_id()
             .with(eq(account_id))
             .times(1)
             .returning(move |_| Err(RepoError::Other));
@@ -513,9 +527,9 @@ mod tests {
         let customer_id = 1;
         let account_id = 4;
 
-        let mut mock_accounts_repo = MockAccountsRepository::new();
+        let mut mock_accounts_repo = MockRepoGetById::<Account>::new();
         mock_accounts_repo
-            .expect_get_account()
+            .expect_get_by_id()
             .with(eq(account_id))
             .times(1)
             .returning(move |_| Err(RepoError::NotFound));
@@ -535,9 +549,9 @@ mod tests {
         let wrong_customer_id = 5;
         let account_id = 4;
 
-        let mut mock_accounts_repo = MockAccountsRepository::new();
+        let mut mock_accounts_repo = MockRepoGetById::<Account>::new();
         mock_accounts_repo
-            .expect_get_account()
+            .expect_get_by_id()
             .with(eq(account_id))
             .times(1)
             .returning(move |_| {
@@ -574,10 +588,20 @@ mod tests {
 
         let mut seq = Sequence::new();
 
-        let mut mock_accounts_repo = MockAccountsRepository::new();
+        mock! {
+            pub AR { }
+            impl RepoGetById<Account> for AR {
+                fn get_by_id(&self, new: i32) -> Result<Account, RepoError>;
+            }
+            impl RepoDeleteById<Account> for AR {
+                fn delete_by_id(&self, id: i32) -> Result<(), RepoError>;
+            }
+        };
+
+        let mut mock_accounts_repo = MockAR::new();
 
         mock_accounts_repo
-            .expect_get_account()
+            .expect_get_by_id()
             .with(eq(account_id))
             .times(1)
             .returning(move |_| {
@@ -600,7 +624,7 @@ mod tests {
             .in_sequence(&mut seq);
 
         mock_accounts_repo
-            .expect_delete_account()
+            .expect_delete_by_id()
             .with(eq(account_id))
             .times(1)
             .returning(|_| Ok(()))
@@ -629,17 +653,27 @@ mod tests {
 
         let mut seq = Sequence::new();
 
-        let mut mock_accounts_repo = MockAccountsRepository::new();
+        mock! {
+            pub AR { }
+            impl RepoGetById<Account> for AR {
+                fn get_by_id(&self, new: i32) -> Result<Account, RepoError>;
+            }
+            impl RepoDeleteById<Account> for AR {
+                fn delete_by_id(&self, id: i32) -> Result<(), RepoError>;
+            }
+        };
+
+        let mut mock_accounts_repo = MockAR::new();
 
         mock_accounts_repo
-            .expect_get_account()
+            .expect_get_by_id()
             .with(eq(account_id))
             .times(1)
             .returning(move |_| Err(crate::error::RepoError::NotFound))
             .in_sequence(&mut seq);
 
         mock_accounts_repo
-            .expect_delete_account()
+            .expect_delete_by_id()
             .with(eq(account_id))
             .times(1)
             .returning(|_| Ok(()))
@@ -667,9 +701,19 @@ mod tests {
         let account_id = 2;
         let wrong_customer_id = 2;
 
-        let mut mock_accounts_repo = MockAccountsRepository::new();
+        mock! {
+            pub AR { }
+            impl RepoGetById<Account> for AR {
+                fn get_by_id(&self, new: i32) -> Result<Account, RepoError>;
+            }
+            impl RepoDeleteById<Account> for AR {
+                fn delete_by_id(&self, id: i32) -> Result<(), RepoError>;
+            }
+        };
+
+        let mut mock_accounts_repo = MockAR::new();
         mock_accounts_repo
-            .expect_get_account()
+            .expect_get_by_id()
             .with(eq(account_id))
             .times(1)
             .returning(move |_| {
@@ -703,9 +747,19 @@ mod tests {
         let customer_id = 5;
         let account_id = 2;
 
-        let mut mock_accounts_repo = MockAccountsRepository::new();
+        mock! {
+            pub AR { }
+            impl RepoGetById<Account> for AR {
+                fn get_by_id(&self, new: i32) -> Result<Account, RepoError>;
+            }
+            impl RepoDeleteById<Account> for AR {
+                fn delete_by_id(&self, id: i32) -> Result<(), RepoError>;
+            }
+        };
+
+        let mut mock_accounts_repo = MockAR::new();
         mock_accounts_repo
-            .expect_get_account()
+            .expect_get_by_id()
             .with(eq(account_id))
             .times(1)
             .returning(move |_| Err(RepoError::Other));

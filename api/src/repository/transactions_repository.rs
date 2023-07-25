@@ -7,7 +7,7 @@ use crate::{
     error::RepoError,
     models::transaction::{FindTransactionQuery, NewTransaction, Transaction},
     schema::{self, transactions},
-    traits::TransactionsRepository,
+    traits::{RepoCreate, RepoFind},
 };
 
 #[derive(Clone)]
@@ -21,11 +21,8 @@ impl TransactionsRepoImpl {
     }
 }
 
-impl TransactionsRepository for TransactionsRepoImpl {
-    fn create_transaction(
-        &self,
-        new_transaction: NewTransaction,
-    ) -> Result<Transaction, RepoError> {
+impl RepoCreate<Transaction, NewTransaction> for TransactionsRepoImpl {
+    fn create(&self, new_transaction: NewTransaction) -> Result<Transaction, RepoError> {
         let mut conn = self.pool.get().map_err(|_| {
             println!("couldn't get db connection from pool");
             RepoError::ConnectionError
@@ -37,11 +34,10 @@ impl TransactionsRepository for TransactionsRepoImpl {
             .get_result(&mut conn)
             .map_err(|_| RepoError::Other)?)
     }
+}
 
-    fn find_transactions(
-        &self,
-        transaction_query: FindTransactionQuery,
-    ) -> Result<Vec<Transaction>, RepoError> {
+impl RepoFind<Transaction, FindTransactionQuery> for TransactionsRepoImpl {
+    fn find(&self, transaction_query: FindTransactionQuery) -> Result<Vec<Transaction>, RepoError> {
         let mut conn = self.pool.get().map_err(|_| {
             println!("couldn't get db connection from pool");
             RepoError::ConnectionError

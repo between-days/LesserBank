@@ -7,7 +7,7 @@ use crate::{
     error::RepoError,
     models::account::{Account, FindAccountQuery, NewAccount},
     schema::{self, accounts},
-    traits::AccountsRepository,
+    traits::{RepoCreate, RepoDeleteById, RepoFind, RepoGetById},
 };
 
 #[derive(Clone)]
@@ -21,8 +21,8 @@ impl AccountsRepoImpl {
     }
 }
 
-impl AccountsRepository for AccountsRepoImpl {
-    fn create_account(&self, new_account: NewAccount) -> Result<Account, RepoError> {
+impl RepoCreate<Account, NewAccount> for AccountsRepoImpl {
+    fn create(&self, new_account: NewAccount) -> Result<Account, RepoError> {
         let mut conn = self.pool.get().map_err(|_| {
             println!("couldn't get db connection from pool");
             RepoError::ConnectionError
@@ -34,8 +34,10 @@ impl AccountsRepository for AccountsRepoImpl {
             .get_result(&mut conn)
             .map_err(|_| RepoError::Other)?)
     }
+}
 
-    fn find_accounts(&self, account_query: FindAccountQuery) -> Result<Vec<Account>, RepoError> {
+impl RepoFind<Account, FindAccountQuery> for AccountsRepoImpl {
+    fn find(&self, account_query: FindAccountQuery) -> Result<Vec<Account>, RepoError> {
         let mut conn = self.pool.get().map_err(|_| {
             println!("couldn't get db connection from pool");
             RepoError::ConnectionError
@@ -58,8 +60,10 @@ impl AccountsRepository for AccountsRepoImpl {
             .load(&mut conn)
             .map_err(|_| RepoError::Other)?)
     }
+}
 
-    fn get_account(&self, account_id: i32) -> Result<Account, RepoError> {
+impl RepoGetById<Account> for AccountsRepoImpl {
+    fn get_by_id(&self, account_id: i32) -> Result<Account, RepoError> {
         let mut conn = self.pool.get().map_err(|_| {
             println!("couldn't get db connection from pool");
             RepoError::ConnectionError
@@ -74,8 +78,10 @@ impl AccountsRepository for AccountsRepoImpl {
                 _ => RepoError::Other,
             })?)
     }
+}
 
-    fn delete_account(&self, account_id: i32) -> Result<(), RepoError> {
+impl RepoDeleteById<Account> for AccountsRepoImpl {
+    fn delete_by_id(&self, account_id: i32) -> Result<(), RepoError> {
         let mut conn = self.pool.get().map_err(|_| {
             println!("couldn't get db connection from pool");
             RepoError::ConnectionError
