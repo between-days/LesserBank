@@ -1,5 +1,4 @@
-import TransactionItem from "@/components/transaction/TransactionItem";
-import { Grid, Group, Skeleton, Space, Stack, Title, useMantineTheme, } from "@mantine/core";
+import { Grid, Skeleton, Space, Stack, Text, Title, useMantineTheme, } from "@mantine/core";
 import React from 'react';
 import CustomPage from "@/components/shared/CustomPage";
 import { AccountNumberAndTypeInfoPaper } from "@/components/account/AccountNumberAndTypeInfoPaper";
@@ -87,16 +86,15 @@ export default function AccountDetail(props: { slug: any; }) {
         {transactionsContent}
     </AccountDetailsLoadingContent>
 
-    const { name, dateOpened, balanceCents, availableBalanceCents, accountType, bsb } = account
+    const { accountName, dateOpened, balanceCents, availableBalanceCents, accountType, bsb } = account
 
     return (
         <CustomPage title={
-            <Group align="flex-start">
-                <Title order={2}>Account Details for</Title>
-                <Title order={2} color={theme.primaryColor} italic>
-                    {name ? name : accountNumber}
-                </Title>
-            </Group>
+            <Title order={2}>Account Details for
+                <Text span color={theme.primaryColor} italic>
+                    {""} {accountName ? accountName : accountNumber}
+                </Text>
+            </Title>
         }>
             <Grid align="center">
                 <Grid.Col xs={12} sm={4}>

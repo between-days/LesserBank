@@ -6,7 +6,7 @@ export type TransactionType = "internal" | "external"
 export interface Account {
   dateOpened: string
   status: AccountStatus
-  name: string | undefined
+  accountName: string | undefined
   accountType: AccountType
   balanceCents: number
   availableBalanceCents: number

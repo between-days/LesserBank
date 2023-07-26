@@ -1,4 +1,4 @@
-import { ThemeIcon, Tooltip, Image } from "@mantine/core"
+import { ThemeIcon, Tooltip } from "@mantine/core"
 import { ACCOUNT_ICON_SIZE, TRANSACTION_ICON_STATUS_SIZE } from "./UIConstants"
 import { IconArrowsUp, IconCircleCheck, IconCloudDollar, IconExclamationCircle, IconReload, IconTimeDuration0 } from "@tabler/icons-react"
 import { AccountType, TransactionStatus } from "./interfaces"

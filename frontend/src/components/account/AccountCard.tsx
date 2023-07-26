@@ -1,11 +1,12 @@
 import { Card, Text, Group, Stack, MantineShadow, Center, Button } from '@mantine/core';
 import { useHover } from '@mantine/hooks';
 import { useRouter } from 'next/router';
-import { getFormattedAccountNumber, getFormattedBsb, getDollarTextFromCents, getIconForAccountType } from '@/UIUtils';
+import { getFormattedAccountNumber, getFormattedBsb, getIconForAccountType } from '@/UIUtils';
 import { AccountType } from '@/interfaces';
+import { AmountText } from '../shared/AmountText';
 
 export interface AccountCardProps {
-    name: string | undefined
+    accountName: string | undefined
     accountType: AccountType
     balanceCents: number
     availableBalanceCents: number
@@ -14,7 +15,7 @@ export interface AccountCardProps {
     onHover: boolean
 }
 
-export default function AccountCard({ name, accountType, accountNumber, availableBalanceCents, bsb, onHover }: AccountCardProps) {
+export default function AccountCard({ accountName, accountType, accountNumber, availableBalanceCents, bsb, onHover }: AccountCardProps) {
     const router = useRouter()
     const { hovered, ref } = useHover();
 
@@ -25,8 +26,8 @@ export default function AccountCard({ name, accountType, accountNumber, availabl
         withBorder = hovered ? false : true
     }
 
-    if (!name || name.length == 0) {
-        name = accountType.toUpperCase() + " ACCOUNT"
+    if (!accountName || accountName.length == 0) {
+        accountName = accountType.toUpperCase() + " ACCOUNT"
     }
 
     const onClick = () => {
@@ -50,7 +51,7 @@ export default function AccountCard({ name, accountType, accountNumber, availabl
                     <Group position='left'>
                         {getIconForAccountType(accountType)}
                         <Stack spacing={0}>
-                            <Text weight={500} fz="lg">{name}</Text>
+                            <Text weight={500} fz="lg">{accountName}</Text>
                             <Group>
                                 <Text color="dimmed" fz="sm">
                                     {getFormattedAccountNumber(accountNumber)}
@@ -63,9 +64,7 @@ export default function AccountCard({ name, accountType, accountNumber, availabl
                     </Group>
                 </Group>
                 <Group position='apart'>
-                    <Text weight={500} fz="lg">
-                        {getDollarTextFromCents(availableBalanceCents)}
-                    </Text>
+                    <AmountText amountCents={availableBalanceCents} />
                     <Button variant="light" onClick={onClick}>
                         Details
                     </Button>
