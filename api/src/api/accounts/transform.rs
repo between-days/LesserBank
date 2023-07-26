@@ -61,7 +61,7 @@ impl From<Vec<Account>> for AccountsRest {
                         account_number: acc.account_number.clone(),
                         available_balance_cents: acc.available_balance_cents,
                         account_name: acc.account_name.clone(),
-                        bsb: acc.bsb,
+                        bsb: acc.bsb.clone(),
                     })
                 })
                 .collect(),

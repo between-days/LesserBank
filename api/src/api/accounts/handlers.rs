@@ -223,7 +223,7 @@ mod tests {
                     account_name: Some("abc".to_string()),
                     account_number: "012345678".to_string(),
                     available_balance_cents: 3444,
-                    bsb: 123456,
+                    bsb: "123456".to_string(),
                 })
             });
 
@@ -263,7 +263,7 @@ mod tests {
             account_name: Some("abc".to_string()),
             account_number: "012345678".to_string(),
             available_balance_cents: 3444,
-            bsb: 123456,
+            bsb: "123456".to_string(),
         };
 
         let actual_account: AccountRest = test::read_body_json(resp).await;
@@ -336,7 +336,7 @@ mod tests {
                         account_name: Some("abc".to_string()),
                         available_balance_cents: 34343,
                         account_number: "012345678".to_string(),
-                        bsb: 123456,
+                        bsb: "123456".to_string(),
                     },
                     Account {
                         id: 2,
@@ -351,7 +351,7 @@ mod tests {
                         available_balance_cents: 34343,
                         account_name: Some("abc".to_string()),
                         account_number: "012345678".to_string(),
-                        bsb: 123456,
+                        bsb: "123456".to_string(),
                     },
                 ])
             });
@@ -386,7 +386,7 @@ mod tests {
                     account_name: Some("abc".to_string()),
                     available_balance_cents: 34343,
                     account_number: "012345678".to_string(),
-                    bsb: 123456,
+                    bsb: "123456".to_string(),
                 },
                 AccountRest {
                     id: 2,
@@ -398,7 +398,7 @@ mod tests {
                     account_name: Some("abc".to_string()),
                     available_balance_cents: 34343,
                     account_number: "012345678".to_string(),
-                    bsb: 123456,
+                    bsb: "123456".to_string(),
                 },
             ],
         };
@@ -468,7 +468,7 @@ mod tests {
                     account_name: Some("abc".to_string()),
                     available_balance_cents: 34343,
                     account_number: "012345678".to_string(),
-                    bsb: 123456,
+                    bsb: "123456".to_string(),
                 })
             });
 
@@ -493,7 +493,7 @@ mod tests {
             account_name: Some("abc".to_string()),
             available_balance_cents: 34343,
             account_number: "012345678".to_string(),
-            bsb: 123456,
+            bsb: "123456".to_string(),
         })
         .unwrap();
 
@@ -568,7 +568,7 @@ mod tests {
                     account_name: Some("abc".to_string()),
                     available_balance_cents: 34343,
                     account_number: "012345678".to_string(),
-                    bsb: 123456,
+                    bsb: "123456".to_string(),
                 })
             });
 
@@ -618,7 +618,7 @@ mod tests {
                     account_name: Some("abc".to_string()),
                     available_balance_cents: 34343,
                     account_number: "012345678".to_string(),
-                    bsb: 123456,
+                    bsb: "123456".to_string(),
                 })
             })
             .in_sequence(&mut seq);
@@ -730,7 +730,7 @@ mod tests {
                     account_name: Some("abc".to_string()),
                     available_balance_cents: 34343,
                     account_number: "012345678".to_string(),
-                    bsb: 123456,
+                    bsb: "123456".to_string(),
                 })
             });
 

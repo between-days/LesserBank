@@ -69,13 +69,12 @@ export function getDollarTextFromCents(balanceCents: number) {
     return `$${balanceDollars.toLocaleString()}`
 }
 
-// TODO: remove number type when bsb on account is string too
-export function getBsbString(bsb: number | string) {
+export function getFormattedBsb(bsb: string) {
     const bsbString = bsb.toString()
     return bsbString.substring(0, 3) + " " + bsbString.substring(3, 6)
 }
 
-export function getAccountNumberString(accountNumber: string) {
+export function getFormattedAccountNumber(accountNumber: string) {
     return accountNumber.substring(0, 3) + " " + accountNumber.substring(3, 6) + " " + accountNumber.substring(6, 10)
 }
 

@@ -1,4 +1,4 @@
-import { getAccountNumberString, getBsbString, getDollarTextFromCents, getIconForTransactionStatus, getPrettyDate } from "@/UIUtils";
+import { getFormattedAccountNumber, getFormattedBsb, getDollarTextFromCents, getIconForTransactionStatus, getPrettyDate } from "@/UIUtils";
 import { TransactionStatus, TransactionType } from "@/interfaces";
 import { Group, Paper, ThemeIcon } from "@mantine/core";
 import { useHover } from "@mantine/hooks";
@@ -18,13 +18,13 @@ interface TransactionToFromItemProps {
 export const TransactionToFromItem = ({ fromName, toName, fromNumber, toNumber, fromBsb, toBsb }: TransactionToFromItemProps) => {
     return <Group mih={50} spacing="lg" align="center">
 
-        {fromName ? <TextAndSubtext text={fromName} subText={getAccountNumberString(fromNumber)} textSize="sm" subTextSize="xs" /> : <TextAndSubtext text={getAccountNumberString(fromNumber)} subText={getBsbString(fromBsb || "")} textSize="sm" subTextSize="xs" />}
+        {fromName ? <TextAndSubtext text={fromName} subText={getFormattedAccountNumber(fromNumber)} textSize="sm" subTextSize="xs" /> : <TextAndSubtext text={getFormattedAccountNumber(fromNumber)} subText={getFormattedBsb(fromBsb || "")} textSize="sm" subTextSize="xs" />}
 
         <ThemeIcon size={TRANSACTION_ICON_TO_FROM_SIZE} variant="light" radius="md">
             <IconArrowBadgeRight />
         </ThemeIcon>
 
-        {toName ? <TextAndSubtext text={toName} subText={getAccountNumberString(toNumber)} textSize="sm" subTextSize="xs" /> : <TextAndSubtext text={getAccountNumberString(toNumber)} subText={getBsbString(toBsb || "")} textSize="sm" subTextSize="xs" />}
+        {toName ? <TextAndSubtext text={toName} subText={getFormattedBsb(toNumber)} textSize="sm" subTextSize="xs" /> : <TextAndSubtext text={getFormattedAccountNumber(toNumber)} subText={getFormattedBsb(toBsb || "")} textSize="sm" subTextSize="xs" />}
     </Group>
 }
 

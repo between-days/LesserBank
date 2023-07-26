@@ -1,7 +1,7 @@
 import { Card, Text, Group, Stack, MantineShadow, Center, Button } from '@mantine/core';
 import { useHover } from '@mantine/hooks';
 import { useRouter } from 'next/router';
-import { getAccountNumberString, getBsbString, getDollarTextFromCents, getIconForAccountType } from '@/UIUtils';
+import { getFormattedAccountNumber, getFormattedBsb, getDollarTextFromCents, getIconForAccountType } from '@/UIUtils';
 import { AccountType } from '@/interfaces';
 
 export interface AccountCardProps {
@@ -10,11 +10,11 @@ export interface AccountCardProps {
     balanceCents: number
     availableBalanceCents: number
     accountNumber: string
-    bsb: number,
+    bsb: string,
     onHover: boolean
 }
 
-export default function AccountCard({ name, accountType, balanceCents, accountNumber, availableBalanceCents, bsb, onHover }: AccountCardProps) {
+export default function AccountCard({ name, accountType, accountNumber, availableBalanceCents, bsb, onHover }: AccountCardProps) {
     const router = useRouter()
     const { hovered, ref } = useHover();
 
@@ -53,10 +53,10 @@ export default function AccountCard({ name, accountType, balanceCents, accountNu
                             <Text weight={500} fz="lg">{name}</Text>
                             <Group>
                                 <Text color="dimmed" fz="sm">
-                                    {getAccountNumberString(accountNumber)}
+                                    {getFormattedAccountNumber(accountNumber)}
                                 </Text>
                                 <Text color="dimmed" fz="sm">
-                                    {getBsbString(bsb)}
+                                    {getFormattedBsb(bsb)}
                                 </Text>
                             </Group>
                         </Stack>

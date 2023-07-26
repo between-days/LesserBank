@@ -30,7 +30,7 @@ pub struct Account {
     pub date_opened: chrono::NaiveDateTime,
     pub account_status: AccountStatus,
     pub account_number: String,
-    pub bsb: i32,
+    pub bsb: String,
 }
 
 #[derive(Insertable, Debug, PartialEq, Clone)]

@@ -11,7 +11,7 @@ export interface Account {
   balanceCents: number
   availableBalanceCents: number
   accountNumber: string
-  bsb: number
+  bsb: string
 }
 
 export interface Accounts {

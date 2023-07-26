@@ -20,22 +20,23 @@ pub mod sql_types {
 
 diesel::table! {
     use diesel::sql_types::*;
-    use super::sql_types::AccountType;
     use super::sql_types::AccountStatus;
+    use super::sql_types::AccountType;
 
     accounts (id) {
         id -> Int4,
         customer_id -> Int4,
-        account_type -> AccountType,
-        balance_cents -> Int8,
-        date_opened -> Timestamptz,
-        account_status -> AccountStatus,
-        #[max_length = 40]
-        account_name -> Nullable<Varchar>,
-        available_balance_cents -> Int8,
         #[max_length = 9]
         account_number -> Varchar,
-        bsb -> Int4,
+        #[max_length = 6]
+        bsb -> Varchar,
+        #[max_length = 40]
+        account_name -> Nullable<Varchar>,
+        account_status -> AccountStatus,
+        account_type -> AccountType,
+        date_opened -> Timestamptz,
+        balance_cents -> Int8,
+        available_balance_cents -> Int8,
     }
 }
 

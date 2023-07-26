@@ -28,7 +28,7 @@ pub struct AccountRest {
     pub account_number: String,
     pub available_balance_cents: i64,
     pub account_name: Option<String>,
-    pub bsb: i32,
+    pub bsb: String,
 }
 
 #[cfg_attr(test, derive(Serialize))]
