@@ -5,8 +5,10 @@ use diesel::{
 
 use crate::{
     error::RepoError,
-    models::account::{Account, FindAccountQuery, NewAccount},
-    schema::{self, accounts},
+    models::{
+        account::{Account, FindAccountQuery, NewAccount},
+        schema::accounts,
+    },
     traits::{RepoCreate, RepoDeleteById, RepoFind, RepoGetById},
 };
 
@@ -43,7 +45,7 @@ impl RepoFind<Account, FindAccountQuery> for AccountsRepoImpl {
             RepoError::ConnectionError
         })?;
 
-        let mut query = schema::accounts::table.into_boxed();
+        let mut query = accounts::table.into_boxed();
         if let Some(id) = account_query.account_id {
             query = query.filter(accounts::id.eq(id));
         }

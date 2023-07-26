@@ -31,7 +31,7 @@ diesel::table! {
         date_opened -> Timestamptz,
         account_status -> AccountStatus,
         #[max_length = 40]
-        name -> Nullable<Varchar>,
+        account_name -> Nullable<Varchar>,
         available_balance_cents -> Int8,
         #[max_length = 9]
         account_number -> Varchar,

@@ -27,7 +27,7 @@ pub struct AccountRest {
     pub account_status: AccountStatusRest,
     pub account_number: String,
     pub available_balance_cents: i64,
-    pub name: Option<String>,
+    pub account_name: Option<String>,
     pub bsb: i32,
 }
 
@@ -39,7 +39,7 @@ pub struct NewAccountRest {
     pub balance_cents: i64,
     pub available_balance_cents: i64,
     pub account_type: AccountTypeRest,
-    pub name: Option<String>,
+    pub account_name: Option<String>,
 }
 
 #[cfg_attr(test, derive(Deserialize))]

@@ -1,9 +1,9 @@
 use diesel::{Insertable, Queryable, Selectable};
 
-use crate::schema::transactions;
+use super::schema::transactions;
 
 #[derive(diesel_derive_enum::DbEnum, Copy, Clone, Debug, PartialEq)]
-#[ExistingTypePath = "crate::schema::sql_types::TransactionStatus"]
+#[ExistingTypePath = "crate::models::schema::sql_types::TransactionStatus"]
 pub enum TransactionStatus {
     Pending,
     Success,
@@ -11,7 +11,7 @@ pub enum TransactionStatus {
 }
 
 #[derive(diesel_derive_enum::DbEnum, Copy, Clone, Debug, PartialEq)]
-#[ExistingTypePath = "crate::schema::sql_types::TransactionType"]
+#[ExistingTypePath = "crate::models::schema::sql_types::TransactionType"]
 pub enum TransactionType {
     Internal,
     External,

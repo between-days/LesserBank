@@ -1,5 +1,5 @@
 -- create some accounts
-INSERT INTO accounts (id, customer_id, account_type, balance_cents, date_opened, account_status, name, available_balance_cents, account_number, bsb)
+INSERT INTO accounts (id, customer_id, account_type, balance_cents, date_opened, account_status, account_name, available_balance_cents, account_number, bsb)
 VALUES 
     (50, 5, 'savings', 2000000000, '2023-07-22 11:49:53.81936+00', 'active', 'Very Expensive Car', 1500000000, '123456789', '123456'),
     (51, 5, 'savings', 242342344, '2018-08-22 9:49:53.81936+00', 'active', 'Expensive House', 1503434, '274857367', '123456'),

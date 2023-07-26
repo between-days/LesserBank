@@ -34,7 +34,7 @@ impl From<Account> for AccountRest {
             account_status: account.account_status.into(),
             account_number: account.account_number,
             available_balance_cents: account.available_balance_cents,
-            name: account.name,
+            account_name: account.account_name,
             bsb: account.bsb,
         }
     }
@@ -60,7 +60,7 @@ impl From<Vec<Account>> for AccountsRest {
                         account_status: acc.account_status.into(),
                         account_number: acc.account_number.clone(),
                         available_balance_cents: acc.available_balance_cents,
-                        name: acc.name.clone(),
+                        account_name: acc.account_name.clone(),
                         bsb: acc.bsb,
                     })
                 })
@@ -85,7 +85,7 @@ impl From<NewAccountRest> for NewAccount {
             customer_id: account.customer_id,
             balance_cents: account.balance_cents,
             account_type: account.account_type.into(),
-            name: account.name,
+            account_name: account.account_name,
             available_balance_cents: account.available_balance_cents,
             // database will only allow a 9 digit number
             account_number: "".to_string(),

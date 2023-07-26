@@ -5,8 +5,10 @@ use diesel::{
 
 use crate::{
     error::RepoError,
-    models::transaction::{FindTransactionQuery, NewTransaction, Transaction},
-    schema::{self, transactions},
+    models::{
+        schema::transactions,
+        transaction::{FindTransactionQuery, NewTransaction, Transaction},
+    },
     traits::{RepoCreate, RepoFind},
 };
 
@@ -43,7 +45,7 @@ impl RepoFind<Transaction, FindTransactionQuery> for TransactionsRepoImpl {
             RepoError::ConnectionError
         })?;
 
-        let mut query = schema::transactions::table.into_boxed();
+        let mut query = transactions::table.into_boxed();
         if let Some(id) = transaction_query.transaction_id {
             query = query.filter(transactions::id.eq(id));
         }

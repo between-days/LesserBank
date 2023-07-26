@@ -10,7 +10,6 @@ mod api;
 mod error;
 mod models;
 mod repository;
-mod schema;
 mod traits;
 mod util;
 

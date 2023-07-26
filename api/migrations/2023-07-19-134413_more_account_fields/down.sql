@@ -1,7 +1,7 @@
 ALTER TABLE accounts
 DROP COLUMN date_opened,
 DROP COLUMN account_status,
-DROP COLUMN name,
+DROP COLUMN account_name,
 DROP COLUMN available_balance_cents,
 DROP COLUMN account_number,
 DROP COLUMN bsb;

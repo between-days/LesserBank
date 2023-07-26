@@ -1,9 +1,9 @@
 use diesel::{Insertable, Queryable, Selectable};
 
-use crate::schema::accounts;
+use super::schema::accounts;
 
 #[derive(diesel_derive_enum::DbEnum, Copy, Clone, Debug, PartialEq)]
-#[ExistingTypePath = "crate::schema::sql_types::AccountType"]
+#[ExistingTypePath = "crate::models::schema::sql_types::AccountType"]
 pub enum AccountType {
     Savings,
     Transaction,
@@ -11,7 +11,7 @@ pub enum AccountType {
 }
 
 #[derive(diesel_derive_enum::DbEnum, Copy, Clone, Debug, PartialEq)]
-#[ExistingTypePath = "crate::schema::sql_types::AccountStatus"]
+#[ExistingTypePath = "crate::models::schema::sql_types::AccountStatus"]
 pub enum AccountStatus {
     Active,
     Inactive,
@@ -26,7 +26,7 @@ pub struct Account {
     pub balance_cents: i64,
     pub account_type: AccountType,
     pub available_balance_cents: i64,
-    pub name: Option<String>,
+    pub account_name: Option<String>,
     pub date_opened: chrono::NaiveDateTime,
     pub account_status: AccountStatus,
     pub account_number: String,
@@ -39,7 +39,7 @@ pub struct NewAccount {
     pub customer_id: i32,
     pub balance_cents: i64,
     pub account_type: AccountType,
-    pub name: Option<String>,
+    pub account_name: Option<String>,
     pub available_balance_cents: i64,
     pub account_number: String,
 }

@@ -208,7 +208,7 @@ mod tests {
                 acc.customer_id == customer_id
                     && acc.balance_cents == 34343
                     && acc.account_type == AccountType::Savings
-                    && acc.name == Some("abc".to_string())
+                    && acc.account_name == Some("abc".to_string())
                     && acc.available_balance_cents == 3444
             })
             .times(1)
@@ -220,7 +220,7 @@ mod tests {
                     account_type: AccountType::Savings,
                     date_opened: dt,
                     account_status: AccountStatus::Active,
-                    name: Some("abc".to_string()),
+                    account_name: Some("abc".to_string()),
                     account_number: "012345678".to_string(),
                     available_balance_cents: 3444,
                     bsb: 123456,
@@ -240,7 +240,7 @@ mod tests {
             balance_cents: 34343,
             available_balance_cents: 3444,
             account_type: AccountTypeRest::Savings,
-            name: Some("abc".to_string()),
+            account_name: Some("abc".to_string()),
         };
 
         let resp = test::TestRequest::post()
@@ -260,7 +260,7 @@ mod tests {
             account_type: AccountTypeRest::Savings,
             date_opened: dt.to_string(),
             account_status: AccountStatusRest::Active,
-            name: Some("abc".to_string()),
+            account_name: Some("abc".to_string()),
             account_number: "012345678".to_string(),
             available_balance_cents: 3444,
             bsb: 123456,
@@ -278,7 +278,7 @@ mod tests {
             customer_id,
             balance_cents: 13424234234,
             account_type: AccountType::Savings,
-            name: Some("abc".to_string()),
+            account_name: Some("abc".to_string()),
             available_balance_cents: 34343,
             account_number: "".to_string(),
         };
@@ -298,7 +298,7 @@ mod tests {
                 balance_cents: 13424234234,
                 available_balance_cents: 3444,
                 account_type: AccountTypeRest::Savings,
-                name: Some("abc".to_string()),
+                account_name: Some("abc".to_string()),
             }),
         )
         .await;
@@ -333,7 +333,7 @@ mod tests {
                             .and_hms_opt(9, 10, 11)
                             .unwrap(),
                         account_status: AccountStatus::Active,
-                        name: Some("abc".to_string()),
+                        account_name: Some("abc".to_string()),
                         available_balance_cents: 34343,
                         account_number: "012345678".to_string(),
                         bsb: 123456,
@@ -349,7 +349,7 @@ mod tests {
                             .unwrap(),
                         account_status: AccountStatus::Active,
                         available_balance_cents: 34343,
-                        name: Some("abc".to_string()),
+                        account_name: Some("abc".to_string()),
                         account_number: "012345678".to_string(),
                         bsb: 123456,
                     },
@@ -383,7 +383,7 @@ mod tests {
                     account_type: AccountTypeRest::Savings,
                     date_opened: "2016-07-08 09:10:11".to_string(),
                     account_status: AccountStatusRest::Active,
-                    name: Some("abc".to_string()),
+                    account_name: Some("abc".to_string()),
                     available_balance_cents: 34343,
                     account_number: "012345678".to_string(),
                     bsb: 123456,
@@ -395,7 +395,7 @@ mod tests {
                     account_type: AccountTypeRest::Savings,
                     date_opened: "2016-07-08 09:10:11".to_string(),
                     account_status: AccountStatusRest::Active,
-                    name: Some("abc".to_string()),
+                    account_name: Some("abc".to_string()),
                     available_balance_cents: 34343,
                     account_number: "012345678".to_string(),
                     bsb: 123456,
@@ -465,7 +465,7 @@ mod tests {
                         .and_hms_opt(9, 10, 11)
                         .unwrap(),
                     account_status: AccountStatus::Active,
-                    name: Some("abc".to_string()),
+                    account_name: Some("abc".to_string()),
                     available_balance_cents: 34343,
                     account_number: "012345678".to_string(),
                     bsb: 123456,
@@ -490,7 +490,7 @@ mod tests {
             account_type: AccountTypeRest::Savings,
             date_opened: "2016-07-08 09:10:11".to_string(),
             account_status: AccountStatusRest::Active,
-            name: Some("abc".to_string()),
+            account_name: Some("abc".to_string()),
             available_balance_cents: 34343,
             account_number: "012345678".to_string(),
             bsb: 123456,
@@ -565,7 +565,7 @@ mod tests {
                         .and_hms_opt(9, 10, 11)
                         .unwrap(),
                     account_status: AccountStatus::Active,
-                    name: Some("abc".to_string()),
+                    account_name: Some("abc".to_string()),
                     available_balance_cents: 34343,
                     account_number: "012345678".to_string(),
                     bsb: 123456,
@@ -615,7 +615,7 @@ mod tests {
                         .and_hms_opt(9, 10, 11)
                         .unwrap(),
                     account_status: AccountStatus::Active,
-                    name: Some("abc".to_string()),
+                    account_name: Some("abc".to_string()),
                     available_balance_cents: 34343,
                     account_number: "012345678".to_string(),
                     bsb: 123456,
@@ -727,7 +727,7 @@ mod tests {
                         .and_hms_opt(9, 10, 11)
                         .unwrap(),
                     account_status: AccountStatus::Active,
-                    name: Some("abc".to_string()),
+                    account_name: Some("abc".to_string()),
                     available_balance_cents: 34343,
                     account_number: "012345678".to_string(),
                     bsb: 123456,

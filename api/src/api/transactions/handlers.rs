@@ -61,7 +61,7 @@ where
     }
     new_transaction.available_balance_cents =
         account_from.available_balance_cents - new_transaction.amount_cents;
-    new_transaction.from_name = account_from.name.clone();
+    new_transaction.from_name = account_from.account_name.clone();
 
     println!(
         "Trying to create {:?} transaction for customer {}",
