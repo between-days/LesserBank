@@ -1,3 +1,12 @@
+use chrono::NaiveDateTime;
+
+use crate::models::transaction::{NewTransaction, Transaction, TransactionStatus, TransactionType};
+
+use super::models::{
+    NewInternalTransactionRest, TransactionRest, TransactionStatusRest, TransactionTypeRest,
+    TransactionsRest,
+};
+
 impl From<TransactionType> for TransactionTypeRest {
     fn from(transaction_type: TransactionType) -> Self {
         match transaction_type {
@@ -24,20 +33,20 @@ fn string_opt_from_naive_dt_opt(dt: Option<NaiveDateTime>) -> Option<String> {
     }
 }
 
-impl From<Transaction> for TransactionRest {
-    fn from(tr: Transaction) -> Self {
+impl From<&Transaction> for TransactionRest {
+    fn from(tr: &Transaction) -> Self {
         Self {
             id: tr.id,
             customer_id: tr.customer_id,
             transaction_type: tr.transaction_type.into(),
             from_us: tr.from_us,
             amount_cents: tr.amount_cents,
-            from_number: tr.from_number,
-            from_bsb: tr.from_bsb,
-            from_name: tr.from_name,
-            to_number: tr.to_number,
-            to_bsb: tr.to_bsb,
-            to_name: tr.to_name,
+            from_number: tr.from_number.clone(),
+            from_bsb: tr.from_bsb.clone(),
+            from_name: tr.from_name.clone(),
+            to_number: tr.to_number.clone(),
+            to_bsb: tr.to_bsb.clone(),
+            to_name: tr.to_name.clone(),
             available_balance_cents: tr.available_balance_cents,
             date_start: tr.date_start.to_string(),
             date_end: string_opt_from_naive_dt_opt(tr.date_end),
@@ -46,44 +55,12 @@ impl From<Transaction> for TransactionRest {
     }
 }
 
-use chrono::NaiveDateTime;
-
-use crate::models::transaction::{NewTransaction, Transaction, TransactionStatus, TransactionType};
-
-use super::models::{
-    NewInternalTransactionRest, TransactionRest, TransactionStatusRest, TransactionTypeRest,
-    TransactionsRest,
-};
-
-// // todo: surely there's a better way to do this
-// // the reason we don't just pass account like *acc
-// // is because strings aren't copyable so this whole struct isn't copyable
-// // so we need to explicitly make a new account with the _explicitly_ copied string
-// // surely there's a better way to do this, for now it'll do
 impl From<Vec<Transaction>> for TransactionsRest {
     fn from(transactions: Vec<Transaction>) -> Self {
         Self {
             transactions: transactions
                 .iter()
-                .map(|tr| {
-                    TransactionRest::from(Transaction {
-                        id: tr.id,
-                        customer_id: tr.customer_id,
-                        transaction_type: tr.transaction_type,
-                        from_us: tr.from_us,
-                        amount_cents: tr.amount_cents,
-                        from_number: tr.from_number.clone(),
-                        from_bsb: tr.from_bsb.clone(),
-                        from_name: tr.from_name.clone(),
-                        to_number: tr.to_number.clone(),
-                        to_bsb: tr.to_bsb.clone(),
-                        to_name: tr.to_name.clone(),
-                        available_balance_cents: tr.available_balance_cents,
-                        date_start: tr.date_start,
-                        date_end: tr.date_end,
-                        transaction_status: tr.transaction_status,
-                    })
-                })
+                .map(|tr| TransactionRest::from(tr))
                 .collect(),
         }
     }

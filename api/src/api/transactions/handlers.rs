@@ -78,7 +78,7 @@ where
 
     Ok(HttpResponse::Created()
         .insert_header(ContentType::json())
-        .json(web::Json::<TransactionRest>(transaction.into())))
+        .json(web::Json::<TransactionRest>((&transaction).into())))
 }
 
 pub async fn find_transactions<TR>(

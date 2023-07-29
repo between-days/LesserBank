@@ -42,7 +42,7 @@ where
 
     Ok(HttpResponse::Created()
         .insert_header(ContentType::json())
-        .json(web::Json::<AccountRest>(account.into())))
+        .json(web::Json::<AccountRest>((&account).into())))
 }
 
 pub async fn find_accounts<AR>(
@@ -114,7 +114,7 @@ where
 
     Ok(HttpResponse::Ok()
         .insert_header(ContentType::json())
-        .json(web::Json::<AccountRest>(account.into())))
+        .json(web::Json::<AccountRest>((&account).into())))
 }
 
 pub async fn delete_account<AR>(
